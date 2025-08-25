@@ -7,8 +7,10 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  updateProfile
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { doc, setDoc, getDocs, collection } from "firebase/firestore";
+import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,8 +25,13 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const router = useRouter();
   const { toast } = useToast();
+  // Sign in state
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
+  
+  // Sign up state
+  const [firstName, setFirstName] = React.useState('');
+  const [lastName, setLastName] = React.useState('');
   const [emailSignup, setEmailSignup] = React.useState('');
   const [passwordSignup, setPasswordSignup] = React.useState('');
 
@@ -49,7 +56,24 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     event.preventDefault();
     setIsLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, emailSignup, passwordSignup);
+      const userCredential = await createUserWithEmailAndPassword(auth, emailSignup, passwordSignup);
+      const user = userCredential.user;
+      
+      await updateProfile(user, {
+        displayName: `${firstName} ${lastName}`.trim(),
+      });
+      
+      const usersCollection = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const isFirstUser = usersSnapshot.empty;
+
+      await setDoc(doc(db, "users", user.uid), {
+          firstName,
+          lastName,
+          email: emailSignup,
+          role: isFirstUser ? 'admin' : 'student'
+      });
+      
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -66,7 +90,24 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setIsLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const usersCollection = collection(db, 'users');
+      const usersSnapshot = await getDocs(usersCollection);
+      const isFirstUser = usersSnapshot.empty;
+
+      const [firstName, ...lastNameParts] = user.displayName?.split(' ') || ['', ''];
+      const lastName = lastNameParts.join(' ');
+      
+      await setDoc(doc(db, "users", user.uid), {
+          firstName,
+          lastName,
+          email: user.email,
+          photoURL: user.photoURL,
+          role: isFirstUser ? 'admin' : 'student'
+      }, { merge: true }); // Merge to not overwrite existing data if user signs up differently first
+
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -145,6 +186,16 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         <TabsContent value="signup">
           <form onSubmit={handleSignUp}>
             <div className="grid gap-4">
+               <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="first-name">First Name</Label>
+                  <Input id="first-name" placeholder="John" disabled={isLoading} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="last-name">Last Name</Label>
+                  <Input id="last-name" placeholder="Doe" disabled={isLoading} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+              </div>
               <div className="grid gap-2">
                 <Label htmlFor="email-signup">Email</Label>
                 <Input

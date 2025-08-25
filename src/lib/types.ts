@@ -30,3 +30,12 @@ export interface QuizResult {
     isCorrect: boolean;
   }[];
 }
+
+export interface AppUser {
+    uid: string;
+    email: string | null;
+    firstName?: string;
+    lastName?: string;
+    photoURL?: string;
+    role: 'admin' | 'student';
+}

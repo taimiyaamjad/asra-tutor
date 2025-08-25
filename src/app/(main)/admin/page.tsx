@@ -47,7 +47,7 @@ const resources = [
 export default function AdminPage() {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle>Learning Resources</CardTitle>
           <CardDescription>
@@ -64,8 +64,8 @@ export default function AdminPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Topic</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="hidden sm:table-cell">Type</TableHead>
+              <TableHead className="hidden md:table-cell">Status</TableHead>
               <TableHead>Date Added</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
@@ -76,8 +76,8 @@ export default function AdminPage() {
             {resources.map((resource) => (
               <TableRow key={resource.topic}>
                 <TableCell className="font-medium">{resource.topic}</TableCell>
-                <TableCell>{resource.type}</TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">{resource.type}</TableCell>
+                <TableCell className="hidden md:table-cell">
                   <Badge
                     variant={
                       resource.status === 'Published'

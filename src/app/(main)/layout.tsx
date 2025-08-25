@@ -2,7 +2,10 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import {
   BrainCircuit,
   LayoutDashboard,
@@ -36,7 +39,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import type { AppUser } from '@/lib/types';
+
 
 const menuItems = [
   {
@@ -58,6 +62,7 @@ const menuItems = [
     href: '/admin',
     icon: Shield,
     label: 'Admin Panel',
+    roles: ['admin'],
   },
 ];
 
@@ -67,6 +72,63 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = React.useState<AppUser | null>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            ...userDoc.data(),
+          } as AppUser);
+        } else {
+          // This case might happen if user is authenticated but their doc doesn't exist yet
+           setUser({ uid: firebaseUser.uid, email: firebaseUser.email, role: 'student' });
+        }
+      } else {
+        setUser(null);
+        router.push('/login');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const visibleMenuItems = menuItems.filter(item => {
+    if (!item.roles) return true; // Public item
+    if (!user?.role) return false;
+    return item.roles.includes(user.role);
+  });
+  
+  if (loading) {
+     return (
+        <div className="flex h-screen items-center justify-center">
+            <svg className="mr-2 h-16 w-16 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        </div>
+     );
+  }
+  
+  if (!user) {
+    return null; // Or a redirect component
+  }
+  
+  // Restrict access to admin page
+  if(pathname === '/admin' && user.role !== 'admin') {
+    router.push('/dashboard');
+    return null;
+  }
 
   return (
     <SidebarProvider>
@@ -79,7 +141,7 @@ export default function MainLayout({
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {menuItems.map((item) => (
+            {visibleMenuItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} legacyBehavior passHref>
                   <SidebarMenuButton
@@ -102,13 +164,13 @@ export default function MainLayout({
                 className="group/menu-item flex w-full justify-start gap-2 overflow-hidden rounded-md p-2 text-left text-sm"
               >
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://placehold.co/100x100.png" alt="User" />
-                  <AvatarFallback>U</AvatarFallback>
+                  <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt={user.firstName || 'User'} />
+                  <AvatarFallback>{(user.firstName || user.email || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start truncate group-data-[collapsible=icon]:hidden">
-                  <span className="font-medium">User</span>
+                  <span className="font-medium">{user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email}</span>
                   <span className="text-xs text-muted-foreground">
-                    user@email.com
+                    {user.email}
                   </span>
                 </div>
               </Button>
@@ -125,12 +187,10 @@ export default function MainLayout({
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <Link href="/login" passHref>
-                <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
-                </DropdownMenuItem>
-              </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarFooter>
