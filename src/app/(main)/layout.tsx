@@ -140,7 +140,7 @@ export default function MainLayout({
           <SidebarTrigger className="sm:hidden" />
           <div className="flex-1" />
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0">{children}</main>
+        <main className="flex-1 p-4 sm:px-6 sm:py-0 animate-fade-in">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
