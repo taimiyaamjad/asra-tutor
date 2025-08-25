@@ -2,7 +2,14 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,17 +22,62 @@ interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const router = useRouter();
+  const { toast } = useToast();
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [emailSignup, setEmailSignup] = React.useState('');
+  const [passwordSignup, setPasswordSignup] = React.useState('');
 
-  async function onSubmit(event: React.SyntheticEvent) {
+  const handleSignIn = async (event: React.SyntheticEvent) => {
     event.preventDefault();
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
-    }, 1000);
-  }
+    } catch (error: any) {
+      toast({
+        title: 'Authentication Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSignUp = async (event: React.SyntheticEvent) => {
+    event.preventDefault();
+    setIsLoading(true);
+    try {
+      await createUserWithEmailAndPassword(auth, emailSignup, passwordSignup);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: 'Authentication Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      router.push('/dashboard');
+    } catch (error: any) {
+      toast({
+        title: 'Google Sign-In Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn('grid gap-6', className)} {...props}>
@@ -35,7 +87,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <TabsTrigger value="signup">Sign Up</TabsTrigger>
         </TabsList>
         <TabsContent value="signin">
-          <form onSubmit={onSubmit}>
+          <form onSubmit={handleSignIn}>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -47,6 +99,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                   autoComplete="email"
                   autoCorrect="off"
                   disabled={isLoading}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -56,6 +110,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                   placeholder="••••••••"
                   type="password"
                   disabled={isLoading}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
               <Button disabled={isLoading}>
@@ -87,7 +143,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           </form>
         </TabsContent>
         <TabsContent value="signup">
-          <form onSubmit={onSubmit}>
+          <form onSubmit={handleSignUp}>
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="email-signup">Email</Label>
@@ -99,6 +155,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                   autoComplete="email"
                   autoCorrect="off"
                   disabled={isLoading}
+                  value={emailSignup}
+                  onChange={(e) => setEmailSignup(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -108,13 +166,15 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
                   placeholder="••••••••"
                   type="password"
                   disabled={isLoading}
+                  value={passwordSignup}
+                  onChange={(e) => setPasswordSignup(e.target.value)}
                 />
               </div>
               <Button disabled={isLoading}>
                 {isLoading && (
                   <svg
                     className="mr-2 h-4 w-4 animate-spin"
-                    xmlns="http://www.w.org/2000/svg"
+                    xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
                   >
@@ -153,7 +213,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         variant="outline"
         type="button"
         disabled={isLoading}
-        onClick={onSubmit}
+        onClick={handleGoogleSignIn}
       >
         <Chrome className="mr-2 h-4 w-4" />
         Google
