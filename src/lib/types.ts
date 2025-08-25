@@ -1,8 +1,11 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   isTyping?: boolean;
+  createdAt?: Timestamp;
 }
 
 export interface QuizQuestion {
@@ -29,6 +32,7 @@ export interface QuizResult {
     correctAnswer: string;
     isCorrect: boolean;
   }[];
+  createdAt?: Timestamp;
 }
 
 export interface AppUser {

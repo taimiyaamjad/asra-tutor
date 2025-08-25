@@ -11,6 +11,9 @@ import { BrainCircuit, Send, User } from 'lucide-react';
 import type { ChatMessage } from '@/lib/types';
 import { aiTutorChat } from '@/ai/flows/ai-tutor-chat';
 import { useToast } from '@/hooks/use-toast';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { useAuthState } from 'react-firebase-hooks/auth';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -18,6 +21,7 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -31,7 +35,7 @@ export default function ChatPage() {
   
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !user) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -44,6 +48,12 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
+      // Save user message to Firestore
+      await addDoc(collection(db, 'users', user.uid, 'chatHistory'), {
+        ...userMessage,
+        createdAt: serverTimestamp(),
+      });
+
       const chatHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
       const response = await aiTutorChat({
         question: input,
@@ -55,6 +65,12 @@ export default function ChatPage() {
         role: 'assistant',
         content: response.answer,
       };
+
+      // Save assistant message to Firestore
+       await addDoc(collection(db, 'users', user.uid, 'chatHistory'), {
+        ...assistantMessage,
+        createdAt: serverTimestamp(),
+      });
 
       setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
     } catch (error) {

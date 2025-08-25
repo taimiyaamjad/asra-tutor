@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -7,31 +10,16 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Activity, Book, Target } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { collection, query, onSnapshot, where } from 'firebase/firestore';
 
-// Icons for stats cards
 const PenSquare = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
-)
+);
 const MessageSquare = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-)
-
-const stats = [
-  {
-    title: 'Quizzes Completed',
-    value: '12',
-    icon: PenSquare,
-    change: '+2 this week',
-  },
-  {
-    title: 'Questions Asked',
-    value: '84',
-    icon: MessageSquare,
-    change: '+15 this week',
-  },
-  { title: 'Average Score', value: '88%', icon: Target, change: '-2%' },
-  { title: 'Active Streak', value: '5 days', icon: Activity, change: '+1 day' },
-];
+);
 
 const progress = [
   { subject: 'Algebra', value: 75 },
@@ -59,6 +47,69 @@ const recommendedTopics = [
 ];
 
 export default function DashboardPage() {
+  const [user] = useAuthState(auth);
+  const [stats, setStats] = useState([
+    {
+      title: 'Quizzes Completed',
+      value: '0',
+      icon: PenSquare,
+    },
+    {
+      title: 'Questions Asked',
+      value: '0',
+      icon: MessageSquare,
+    },
+    { title: 'Average Score', value: '0%', icon: Target },
+    { title: 'Active Streak', value: '0 days', icon: Activity },
+  ]);
+
+  useEffect(() => {
+    if (user) {
+      // Listener for quiz attempts
+      const quizQuery = query(collection(db, 'users', user.uid, 'quizAttempts'));
+      const unsubscribeQuizzes = onSnapshot(quizQuery, (snapshot) => {
+        const quizAttempts = snapshot.docs.map(doc => doc.data());
+        const totalQuizzes = quizAttempts.length;
+        const averageScore = totalQuizzes > 0 
+          ? quizAttempts.reduce((acc, curr) => acc + curr.score, 0) / totalQuizzes
+          : 0;
+
+        setStats((prev) =>
+          prev.map((stat) => {
+            if (stat.title === 'Quizzes Completed') {
+              return { ...stat, value: totalQuizzes.toString() };
+            }
+            if (stat.title === 'Average Score') {
+              return { ...stat, value: `${averageScore.toFixed(0)}%` };
+            }
+            return stat;
+          })
+        );
+      });
+
+      // Listener for chat history
+      const chatQuery = query(
+        collection(db, 'users', user.uid, 'chatHistory'),
+        where('role', '==', 'user')
+      );
+      const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
+        setStats((prev) =>
+          prev.map((stat) =>
+            stat.title === 'Questions Asked'
+              ? { ...stat, value: snapshot.size.toString() }
+              : stat
+          )
+        );
+      });
+      
+      // Cleanup listeners
+      return () => {
+        unsubscribeQuizzes();
+        unsubscribeChat();
+      };
+    }
+  }, [user]);
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -79,7 +130,6 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
             </CardContent>
           </Card>
         ))}

@@ -25,6 +25,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { CheckCircle, XCircle } from 'lucide-react';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+
 
 export default function QuizPage() {
   const [topic, setTopic] = useState('');
@@ -34,6 +38,7 @@ export default function QuizPage() {
   const [userAnswers, setUserAnswers] = useState<UserQuizAttempt>({});
   const [result, setResult] = useState<QuizResult | null>(null);
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
 
   const handleGenerateQuiz = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,8 +77,8 @@ export default function QuizPage() {
     setUserAnswers((prev) => ({ ...prev, [questionIndex]: value }));
   };
 
-  const handleSubmitQuiz = () => {
-    if (!quiz) return;
+  const handleSubmitQuiz = async () => {
+    if (!quiz || !user) return;
 
     let correctAnswers = 0;
     const results = quiz.quiz.map((q, index) => {
@@ -87,13 +92,31 @@ export default function QuizPage() {
         isCorrect,
       };
     });
+    
+    const score = (correctAnswers / quiz.quiz.length) * 100;
 
-    setResult({
-      score: (correctAnswers / quiz.quiz.length) * 100,
+    const quizResultData = {
+      score,
       correctAnswers,
       totalQuestions: quiz.quiz.length,
-      results,
-    });
+      topic,
+      createdAt: serverTimestamp(),
+    };
+
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'quizAttempts'), quizResultData);
+      setResult({
+        ...quizResultData,
+        results,
+      });
+    } catch (error) {
+      console.error("Error saving quiz result: ", error);
+      toast({
+        title: 'Submission Failed',
+        description: 'Could not save your quiz results. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
   
   const getOptionClass = (isCorrect: boolean, isSelected: boolean) => {
@@ -228,7 +251,10 @@ export default function QuizPage() {
            ))}
          </CardContent>
          <CardFooter>
-           <Button onClick={() => setQuiz(null)}>Try Another Quiz</Button>
+           <Button onClick={() => {
+              setQuiz(null);
+              setResult(null);
+           }}>Try Another Quiz</Button>
          </CardFooter>
        </Card>
       )}
