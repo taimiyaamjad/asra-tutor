@@ -143,15 +143,16 @@ export default function MainLayout({
           <SidebarMenu>
             {visibleMenuItems.map((item) => (
               <SidebarMenuItem key={item.href}>
-                <Link href={item.href} legacyBehavior passHref>
-                  <SidebarMenuButton
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === item.href}
+                  tooltip={item.label}
+                >
+                  <Link href={item.href}>
                     <item.icon />
                     <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -169,7 +170,7 @@ export default function MainLayout({
                 </Avatar>
                 <div className="flex flex-col items-start truncate group-data-[collapsible=icon]:hidden">
                   <span className="font-medium">{user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email}</span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-sm text-muted-foreground">
                     {user.email}
                   </span>
                 </div>
