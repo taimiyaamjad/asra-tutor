@@ -9,7 +9,7 @@ export function PublicFooter() {
       </p>
       <div className="sm:ml-auto flex items-center gap-4 sm:gap-6">
         <p className="text-xs text-muted-foreground">
-            Designed by Zenova <br /> (Taimiya Amjad)
+            Designed by Zenova (Taimiya Amjad)
         </p>
       </div>
     </footer>
