@@ -63,7 +63,10 @@ export default function QuizPage() {
 
       let parsedQuiz;
       try {
-        parsedQuiz = JSON.parse(response.quiz);
+        // The AI sometimes returns a string that is not a valid JSON object.
+        // It might be wrapped in ```json ... ``` or be just the array.
+        const jsonString = response.quiz.replace(/```json/g, '').replace(/```/g, '').trim();
+        parsedQuiz = JSON.parse(jsonString);
       } catch (parseError) {
          console.error('Failed to parse quiz JSON string:', response.quiz);
          throw new Error('Received invalid quiz format from AI.');
@@ -240,7 +243,7 @@ export default function QuizPage() {
         </Card>
       )}
 
-      {result && (
+      {result && quiz && (
          <Card>
          <CardHeader>
            <CardTitle>Quiz Results</CardTitle>
@@ -254,7 +257,7 @@ export default function QuizPage() {
              <div key={index} className="rounded-lg border p-4">
                <p className="mb-4 font-medium">{index + 1}. {res.question}</p>
                <div className="space-y-2">
-                 {quiz?.quiz[index].options.map((option, optIndex) => (
+                 {quiz.quiz[index].options.map((option, optIndex) => (
                     <div key={optIndex} className={cn("flex items-center gap-2", getOptionClass(option === res.correctAnswer, option === res.userAnswer))}>
                       {option === res.correctAnswer ? <CheckCircle className="h-4 w-4" /> : (option === res.userAnswer ? <XCircle className="h-4 w-4" /> : <div className="h-4 w-4" />)}
                       <span>{option}</span>
