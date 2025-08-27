@@ -9,7 +9,7 @@ export function PublicFooter() {
       </p>
       <div className="sm:ml-auto flex items-center gap-4 sm:gap-6">
         <p className="text-xs text-muted-foreground">
-            Designed by Zenova (Taimiya Amjad)
+            Designed by Zenova <br /> (Taimiya Amjad)
         </p>
         <nav className="flex gap-4 sm:gap-6">
           <Link href="#" className="text-xs hover:underline underline-offset-4">
