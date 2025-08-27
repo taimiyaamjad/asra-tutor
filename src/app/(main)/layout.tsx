@@ -208,6 +208,10 @@ export default function MainLayout({
         <div className="flex flex-col min-h-screen">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
             <SidebarTrigger className="sm:hidden" />
+            <div className="flex items-center gap-2 md:hidden">
+              <BrainCircuit className="h-6 w-6 text-primary" />
+              <span className="font-bold">Asra</span>
+            </div>
             <div className="flex-1" />
           </header>
           <main className="flex-1 p-4 sm:px-6 sm:py-0 animate-fade-in">{children}</main>
