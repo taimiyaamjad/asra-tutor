@@ -42,9 +42,6 @@ export function PublicHeader() {
         </nav>
         <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="flex items-center space-x-2">
-                 <Button asChild variant="ghost">
-                    <Link href="/login">Login</Link>
-                </Button>
                 <Button asChild>
                     <Link href="/login">Get Started</Link>
                 </Button>
