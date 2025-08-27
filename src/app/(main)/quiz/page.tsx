@@ -73,11 +73,11 @@ export default function QuizPage() {
       }
       
       let quizData;
+      // The AI might return an array directly, or the expected object.
+      // We handle both cases to be safe.
       if (Array.isArray(parsedResponse)) {
-        // Handle cases where AI returns an array directly
         quizData = { quiz: parsedResponse };
       } else if (parsedResponse && Array.isArray(parsedResponse.quiz)) {
-        // Handle cases where AI returns the expected object
         quizData = parsedResponse;
       }
 

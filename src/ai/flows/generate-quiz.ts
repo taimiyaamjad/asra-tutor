@@ -49,7 +49,7 @@ const prompt = ai.definePrompt({
 }
 
 Ensure that the answer field is one of the options in the options array.
-Your entire output must be a single, valid, stringified JSON object. Do not include any other text or formatting.
+Your entire output must be a single, valid, stringified JSON object. Do not include any other text or formatting. Just the raw JSON string.
 `,
 });
 
