@@ -76,8 +76,10 @@ const menuItems = [
 
 export default function MainLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: {};
 }) {
   const pathname = usePathname();
   const router = useRouter();
