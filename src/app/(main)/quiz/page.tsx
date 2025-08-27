@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -60,12 +61,16 @@ export default function QuizPage() {
         numQuestions: parseInt(numQuestions),
       });
       const parsedQuiz = JSON.parse(response.quiz);
-      setQuiz(parsedQuiz);
+      if (parsedQuiz && Array.isArray(parsedQuiz.quiz)) {
+        setQuiz(parsedQuiz);
+      } else {
+        throw new Error('Received invalid quiz format from AI.');
+      }
     } catch (error) {
       console.error('Failed to generate quiz:', error);
       toast({
         title: 'Generation Failed',
-        description: 'Could not generate the quiz. Please try again.',
+        description: 'Could not generate the quiz. Please try again or rephrase your topic.',
         variant: 'destructive',
       });
     } finally {
