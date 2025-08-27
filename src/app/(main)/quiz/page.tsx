@@ -60,10 +60,19 @@ export default function QuizPage() {
         topic,
         numQuestions: parseInt(numQuestions),
       });
-      const parsedQuiz = JSON.parse(response.quiz);
-      if (parsedQuiz && Array.isArray(parsedQuiz.quiz)) {
+
+      let parsedQuiz;
+      try {
+        parsedQuiz = JSON.parse(response.quiz);
+      } catch (parseError) {
+         console.error('Failed to parse quiz JSON string:', response.quiz);
+         throw new Error('Received invalid quiz format from AI.');
+      }
+      
+      if (parsedQuiz && Array.isArray(parsedQuiz.quiz) && parsedQuiz.quiz.length > 0) {
         setQuiz(parsedQuiz);
       } else {
+        console.error('Parsed quiz is not in the expected format:', parsedQuiz);
         throw new Error('Received invalid quiz format from AI.');
       }
     } catch (error) {
