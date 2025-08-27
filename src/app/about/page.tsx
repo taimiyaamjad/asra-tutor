@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { BrainCircuit } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
+import { PublicHeader } from '@/components/public-header';
 
 const teamMembers = [
   { name: 'Jane Doe', role: 'Founder & CEO', avatar: 'https://picsum.photos/100/100?a=1' },
@@ -14,29 +15,7 @@ const teamMembers = [
 export default function AboutPage() {
   return (
     <div className="flex flex-col min-h-screen animate-fade-in">
-      <header className="px-4 lg:px-6 h-14 flex items-center bg-background border-b">
-        <Link href="/home" className="flex items-center justify-center">
-          <BrainCircuit className="h-6 w-6 text-primary" />
-          <span className="sr-only">Asra</span>
-        </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link
-            href="/home"
-            className="text-sm font-medium hover:underline underline-offset-4"
-          >
-            Home
-          </Link>
-          <Link
-            href="/login"
-            className="text-sm font-medium hover:underline underline-offset-4"
-          >
-            Login
-          </Link>
-          <Button asChild>
-            <Link href="/login">Get Started</Link>
-          </Button>
-        </nav>
-      </header>
+      <PublicHeader />
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
