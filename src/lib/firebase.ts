@@ -5,7 +5,7 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCysfLskL2bpfzUEDDOuNr0dv4_ZarnHyc",
+  apiKey: "AIzaSyDIc2Zot63gZgn_-9XE9Fab4MF-FH5J0OY",
   authDomain: "asra-tutor.firebaseapp.com",
   projectId: "asra-tutor",
   storageBucket: "asra-tutor.appspot.com",
