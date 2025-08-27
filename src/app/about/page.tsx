@@ -5,6 +5,7 @@ import { BrainCircuit } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Image from 'next/image';
 import { PublicHeader } from '@/components/public-header';
+import { PublicFooter } from '@/components/public-footer';
 
 const teamMembers = [
   { name: 'Taimiya Amjad', role: 'CEO and founder', avatar: 'https://picsum.photos/100/100?a=1' },
@@ -87,24 +88,7 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-        <p className="text-xs text-muted-foreground">
-          &copy; 2025 Asra AI. All rights reserved.
-        </p>
-        <div className="sm:ml-auto flex items-center gap-4 sm:gap-6">
-          <p className="text-xs text-muted-foreground">
-            Designed by Zenova (Taimiya Amjad)
-          </p>
-          <nav className="flex gap-4 sm:gap-6">
-            <Link href="#" className="text-xs hover:underline underline-offset-4">
-              Terms of Service
-            </Link>
-            <Link href="#" className="text-xs hover:underline underline-offset-4">
-              Privacy
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

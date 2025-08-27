@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -40,6 +41,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { AppUser } from '@/lib/types';
+import { PublicFooter } from '@/components/public-footer';
 
 
 const menuItems = [
@@ -197,11 +199,16 @@ export default function MainLayout({
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-          <SidebarTrigger className="sm:hidden" />
-          <div className="flex-1" />
-        </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-0 animate-fade-in">{children}</main>
+        <div className="flex flex-col min-h-screen">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+            <SidebarTrigger className="sm:hidden" />
+            <div className="flex-1" />
+          </header>
+          <main className="flex-1 p-4 sm:px-6 sm:py-0 animate-fade-in">{children}</main>
+          <div className="mt-auto">
+            <PublicFooter />
+          </div>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
