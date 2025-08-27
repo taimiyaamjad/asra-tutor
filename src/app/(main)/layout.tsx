@@ -16,6 +16,7 @@ import {
   LogOut,
   User,
   Settings,
+  FileText,
 } from 'lucide-react';
 
 import {
@@ -59,6 +60,11 @@ const menuItems = [
     href: '/quiz',
     icon: PenSquare,
     label: 'Quiz Generator',
+  },
+  {
+    href: '/articles',
+    icon: FileText,
+    label: 'Articles',
   },
   {
     href: '/admin',

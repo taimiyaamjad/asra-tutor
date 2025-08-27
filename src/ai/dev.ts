@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/ai-tutor-chat.ts';
 import '@/ai/flows/generate-quiz.ts';
+import '@/ai/flows/generate-article.ts';
