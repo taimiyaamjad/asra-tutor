@@ -7,9 +7,7 @@ import Image from 'next/image';
 import { PublicHeader } from '@/components/public-header';
 
 const teamMembers = [
-  { name: 'Jane Doe', role: 'Founder & CEO', avatar: 'https://picsum.photos/100/100?a=1' },
-  { name: 'John Smith', role: 'Lead AI Engineer', avatar: 'https://picsum.photos/100/100?a=2' },
-  { name: 'Emily White', role: 'Head of Curriculum', avatar: 'https://picsum.photos/100/100?a=3' },
+  { name: 'Taimiya Amjad', role: 'CEO and founder', avatar: 'https://picsum.photos/100/100?a=1' },
 ];
 
 export default function AboutPage() {
@@ -72,7 +70,7 @@ export default function AboutPage() {
                 dedicated to revolutionizing the learning experience.
               </p>
             </div>
-            <div className="mx-auto grid max-w-5xl gap-8 py-12 sm:grid-cols-2 md:grid-cols-3">
+            <div className="mx-auto grid max-w-5xl gap-8 py-12 sm:grid-cols-1 md:grid-cols-1">
               {teamMembers.map((member) => (
                 <div key={member.name} className="flex flex-col items-center space-y-2">
                   <Avatar className="h-24 w-24">
