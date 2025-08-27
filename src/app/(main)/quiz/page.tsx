@@ -61,21 +61,30 @@ export default function QuizPage() {
         numQuestions: parseInt(numQuestions),
       });
 
-      let parsedQuiz;
+      let parsedResponse;
       try {
         // The AI sometimes returns a string that is not a valid JSON object.
         // It might be wrapped in ```json ... ``` or be just the array.
         const jsonString = response.quiz.replace(/```json/g, '').replace(/```/g, '').trim();
-        parsedQuiz = JSON.parse(jsonString);
+        parsedResponse = JSON.parse(jsonString);
       } catch (parseError) {
          console.error('Failed to parse quiz JSON string:', response.quiz);
          throw new Error('Received invalid quiz format from AI.');
       }
       
-      if (parsedQuiz && Array.isArray(parsedQuiz.quiz) && parsedQuiz.quiz.length > 0) {
-        setQuiz(parsedQuiz);
+      let quizData;
+      if (Array.isArray(parsedResponse)) {
+        // Handle cases where AI returns an array directly
+        quizData = { quiz: parsedResponse };
+      } else if (parsedResponse && Array.isArray(parsedResponse.quiz)) {
+        // Handle cases where AI returns the expected object
+        quizData = parsedResponse;
+      }
+
+      if (quizData && quizData.quiz.length > 0) {
+        setQuiz(quizData);
       } else {
-        console.error('Parsed quiz is not in the expected format:', parsedQuiz);
+        console.error('Parsed quiz is not in the expected format:', parsedResponse);
         throw new Error('Received invalid quiz format from AI.');
       }
     } catch (error) {
