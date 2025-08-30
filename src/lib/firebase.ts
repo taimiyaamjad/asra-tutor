@@ -5,12 +5,12 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
-  projectId: "YOUR_FIREBASE_PROJECT_ID",
-  storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
-  appId: "YOUR_FIREBASE_APP_ID"
+  apiKey: "AIzaSyCysfLskL2bpfzUEDDOuNr0dv4_ZarnHyc",
+  authDomain: "asra-tutor.firebaseapp.com",
+  projectId: "asra-tutor",
+  storageBucket: "asra-tutor.appspot.com",
+  messagingSenderId: "1039365743361",
+  appId: "1:1039365743361:web:7d4602a2e025df05083100"
 };
 
 // Initialize Firebase
