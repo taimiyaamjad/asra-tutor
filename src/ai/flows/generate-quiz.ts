@@ -17,8 +17,14 @@ const GenerateQuizInputSchema = z.object({
 });
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
+const QuizQuestionSchema = z.object({
+  question: z.string().describe('The text of the quiz question.'),
+  options: z.array(z.string()).describe('An array of possible answers.'),
+  answer: z.string().describe('The correct answer from the options.'),
+});
+
 const GenerateQuizOutputSchema = z.object({
-  quiz: z.string().describe('The generated quiz in JSON format.'),
+  quiz: z.array(QuizQuestionSchema).describe('An array of quiz questions.'),
 });
 export type GenerateQuizOutput = z.infer<typeof GenerateQuizOutputSchema>;
 
@@ -30,26 +36,21 @@ const prompt = ai.definePrompt({
   name: 'generateQuizPrompt',
   input: {schema: GenerateQuizInputSchema},
   output: {schema: GenerateQuizOutputSchema},
-  prompt: `You are a quiz generator. Generate a quiz on the topic of {{topic}} with {{numQuestions}} questions. The quiz should be returned as a **stringified JSON object** with the following format:
+  prompt: `You are a quiz generator. Generate a quiz on the topic of {{topic}} with {{numQuestions}} questions.
+Your output MUST be a valid JSON object that adheres to the provided schema. Do not include any other text, formatting, or code fences.
 
+Example of the required JSON format:
 {
   "quiz": [
     {
-      "question": "question text",
-      "options": ["option1", "option2", "option3", "option4"],
-      "answer": "correct answer"
-    },
-   {
-      "question": "question text",
-      "options": ["option1", "option2", "option3", "option4"],
-      "answer": "correct answer"
-    },
-    // more questions here
+      "question": "What is the capital of France?",
+      "options": ["London", "Berlin", "Paris", "Madrid"],
+      "answer": "Paris"
+    }
   ]
 }
 
-Ensure that the answer field is one of the options in the options array.
-Your entire output must be a single, valid, stringified JSON object. Do not include any other text or formatting. Just the raw JSON string.
+Ensure that for each question, the 'answer' field is one of the strings present in the 'options' array.
 `,
 });
 
@@ -61,6 +62,9 @@ const generateQuizFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output || !Array.isArray(output.quiz)) {
+      throw new Error('Received invalid or empty quiz data from AI.');
+    }
+    return output;
   }
 );
