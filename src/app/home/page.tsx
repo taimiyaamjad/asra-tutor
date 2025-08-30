@@ -35,7 +35,7 @@ export default function HomePage() {
                 </div>
               </div>
                <Image
-                src="https://picsum.photos/600/400"
+                src="https://taimiyaamjad.github.io/dev/asra-tutor.png"
                 width={600}
                 height={400}
                 alt="Hero"

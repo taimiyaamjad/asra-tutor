@@ -23,6 +23,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'taimiyaamjad.github.io',
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
   async redirects() {
