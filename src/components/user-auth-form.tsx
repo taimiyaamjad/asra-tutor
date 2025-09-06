@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, getDocs, collection } from "firebase/firestore";
+import { doc, setDoc, getDoc, collection, getDocs } from "firebase/firestore";
 import { auth, db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -63,16 +63,22 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         displayName: `${firstName} ${lastName}`.trim(),
       });
       
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      // Determine role - first user is admin
       const usersCollection = collection(db, 'users');
       const usersSnapshot = await getDocs(usersCollection);
-      const isFirstUser = usersSnapshot.empty;
+      const isFirstUser = usersSnapshot.empty || usersSnapshot.size === 0;
 
-      await setDoc(doc(db, "users", user.uid), {
-          firstName,
-          lastName,
-          email: emailSignup,
-          role: isFirstUser ? 'admin' : 'student'
-      });
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+            firstName,
+            lastName,
+            email: emailSignup,
+            role: isFirstUser ? 'admin' : 'student'
+        });
+      }
       
       router.push('/dashboard');
     } catch (error: any) {
@@ -93,20 +99,25 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      const usersCollection = collection(db, 'users');
-      const usersSnapshot = await getDocs(usersCollection);
-      const isFirstUser = usersSnapshot.empty;
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
 
-      const [firstName, ...lastNameParts] = user.displayName?.split(' ') || ['', ''];
-      const lastName = lastNameParts.join(' ');
-      
-      await setDoc(doc(db, "users", user.uid), {
-          firstName,
-          lastName,
-          email: user.email,
-          photoURL: user.photoURL,
-          role: isFirstUser ? 'admin' : 'student'
-      }, { merge: true }); // Merge to not overwrite existing data if user signs up differently first
+      if (!userDoc.exists()) {
+        const usersCollection = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollection);
+        const isFirstUser = usersSnapshot.empty || usersSnapshot.size === 0;
+
+        const [firstName, ...lastNameParts] = user.displayName?.split(' ') || ['', ''];
+        const lastName = lastNameParts.join(' ');
+        
+        await setDoc(userDocRef, {
+            firstName,
+            lastName,
+            email: user.email,
+            photoURL: user.photoURL,
+            role: isFirstUser ? 'admin' : 'student'
+        });
+      }
 
       router.push('/dashboard');
     } catch (error: any) {
