@@ -14,6 +14,7 @@ import {z} from 'genkit';
 const GenerateQuizInputSchema = z.object({
   topic: z.string().describe('The topic for the quiz.'),
   numQuestions: z.number().describe('The number of questions to generate.'),
+  difficulty: z.string().describe("The difficulty of the quiz. Can be 'easy', 'medium', or 'hard'.").optional(),
 });
 export type GenerateQuizInput = z.infer<typeof GenerateQuizInputSchema>;
 
@@ -37,6 +38,8 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateQuizInputSchema},
   output: {schema: GenerateQuizOutputSchema},
   prompt: `You are a quiz generator. Generate a quiz on the topic of {{topic}} with {{numQuestions}} questions.
+The difficulty of the quiz should be {{difficulty}}.
+
 Your output MUST be a valid JSON object that adheres to the provided schema. Do not include any other text, formatting, or code fences.
 
 Example of the required JSON format:

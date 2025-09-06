@@ -34,6 +34,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 export default function QuizPage() {
   const [topic, setTopic] = useState('');
   const [numQuestions, setNumQuestions] = useState('5');
+  const [difficulty, setDifficulty] = useState('easy');
   const [isLoading, setIsLoading] = useState(false);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [userAnswers, setUserAnswers] = useState<UserQuizAttempt>({});
@@ -59,6 +60,7 @@ export default function QuizPage() {
       const response = await generateQuiz({
         topic,
         numQuestions: parseInt(numQuestions),
+        difficulty,
       });
 
       if (response && response.quiz && response.quiz.length > 0) {
@@ -141,8 +143,8 @@ export default function QuizPage() {
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleGenerateQuiz}>
-          <CardContent className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-2 md:col-span-1">
               <Label htmlFor="topic">Topic</Label>
               <Input
                 id="topic"
@@ -168,6 +170,23 @@ export default function QuizPage() {
                   <SelectItem value="25">25</SelectItem>
                   <SelectItem value="50">50</SelectItem>
                   <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="difficulty">Difficulty</Label>
+              <Select
+                value={difficulty}
+                onValueChange={setDifficulty}
+                disabled={isLoading}
+              >
+                <SelectTrigger id="difficulty">
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
                 </SelectContent>
               </Select>
             </div>
