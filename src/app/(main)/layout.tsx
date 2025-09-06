@@ -17,6 +17,7 @@ import {
   User,
   Settings,
   FileText,
+  Users,
 } from 'lucide-react';
 
 import {
@@ -55,6 +56,11 @@ const menuItems = [
     href: '/chat',
     icon: MessageSquare,
     label: 'AI Chat',
+  },
+  {
+    href: '/group-chat',
+    icon: Users,
+    label: 'Group Chat',
   },
   {
     href: '/quiz',
