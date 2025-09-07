@@ -116,8 +116,8 @@ export default function HeavenlyTrialPage() {
         return () => clearInterval(interval);
     }
     if(game?.state === 'topic-selection') {
-         const createdAtTime = (game.createdAt as any)?.seconds;
-         if(!createdAtTime) return;
+         // createdAt might be a server timestamp object initially, convert to seconds if needed
+         const createdAtTime = game.createdAt ? (game.createdAt as any).seconds || Math.floor(Date.now() / 1000) : Math.floor(Date.now() / 1000);
 
          const interval = setInterval(() => {
             const now = Date.now() / 1000;
@@ -187,11 +187,10 @@ export default function HeavenlyTrialPage() {
 
     const playerIndex = game.players.findIndex(p => p.uid === user.uid);
     if (playerIndex !== -1) {
-      const updatePath = `players.${playerIndex}.topic`;
-      const submittedPath = `players.${playerIndex}.topicSubmitted`;
-      await updateDoc(doc(db, 'games', game.id!), { 
-          [updatePath]: topic,
-          [submittedPath]: true
+      const gameRef = doc(db, 'games', game.id!);
+      await updateDoc(gameRef, {
+        [`players.${playerIndex}.topic`]: topic,
+        [`players.${playerIndex}.topicSubmitted`]: true
       });
     }
   };
@@ -278,12 +277,12 @@ export default function HeavenlyTrialPage() {
        const currentQuestion = game.questions[game.currentQuestionIndex];
        if(!currentQuestion) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Waiting for round to start...</p></div>;
        
-       const roundTopicOwner = game.state === 'round-1' ? game.players[0] : game.players[1];
-       
+       const roundTopicOwner = game.state === 'round-1' ? game.players.find(p => p.uid === game.playerIds[0]) : game.players.find(p => p.uid === game.playerIds[1]);
+
        return (
          <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">{game.state.replace('-', ' ')}: {roundTopicOwner.topic}</h2>
+                <h2 className="text-2xl font-bold">{game.state.replace('-', ' ')}: {roundTopicOwner?.topic}</h2>
                 <div className="flex items-center gap-2 font-bold text-lg">
                     <Clock className="h-6 w-6" />
                     <span>{timeLeft}s</span>
@@ -296,19 +295,19 @@ export default function HeavenlyTrialPage() {
                 <RadioGroup onValueChange={(val) => handleAnswerSubmit(game.currentQuestionIndex, val)} value={userAnswers[game.currentQuestionIndex] || ''} className="space-y-2">
                     {currentQuestion.options.map((option, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option} id={`q${game.currentQuestionIndex}o${i}`} disabled={!!me?.answers[game.currentQuestionIndex]}/>
+                            <RadioGroupItem value={option} id={`q${game.currentQuestionIndex}o${i}`} disabled={!!(me?.answers || {})[game.currentQuestionIndex]}/>
                             <Label htmlFor={`q${game.currentQuestionIndex}o${i}`}>{option}</Label>
                         </div>
                     ))}
                 </RadioGroup>
             </div>
-            {me?.answers[game.currentQuestionIndex] && <p className="text-center text-green-500 font-bold">Answer submitted! Waiting for opponent...</p>}
+            {(me?.answers || {})[game.currentQuestionIndex] && <p className="text-center text-green-500 font-bold">Answer submitted! Waiting for opponent...</p>}
          </div>
        )
     }
 
     if (game.state === 'finished') {
-        const winner = game.players.reduce((a, b) => a.score > b.score ? a : (b.score > a.score ? b : null));
+        const winner = game.players.reduce((a, b) => a.score > b.score ? a : (b.score > a.score ? b : null), null as Player | null);
         
         return (
             <div className="text-center">
