@@ -26,10 +26,11 @@ import {
   deleteDoc,
   serverTimestamp,
   getDoc,
+  httpsCallable,
 } from 'firebase/firestore';
+import { getFunctions } from 'firebase/functions';
 import { useToast } from '@/hooks/use-toast';
 import type { Game, Player, GameState, AppUser, Quiz, QuizQuestion } from '@/lib/types';
-import { generateQuiz } from '@/ai/flows/generate-quiz';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
@@ -39,6 +40,10 @@ import { Label } from '@/components/ui/label';
 
 const randomTopics = ["History", "Science", "Math", "Literature", "Geography", "Art"];
 
+const functions = getFunctions(auth.app);
+const onPlayerAnswer = httpsCallable(functions, 'onPlayerAnswer');
+
+
 export default function HeavenlyTrialPage() {
   const [user] = useAuthState(auth);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -46,7 +51,6 @@ export default function HeavenlyTrialPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [topic, setTopic] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   
   const { toast } = useToast();
@@ -58,7 +62,6 @@ export default function HeavenlyTrialPage() {
         if(doc.exists()) {
           setAppUser({ uid: user.uid, ...doc.data() } as AppUser);
         } else {
-          // If the user doc doesn't exist for some reason, create a fallback
            setAppUser({ uid: user.uid, email: user.email, role: 'student', firstName: user.displayName || 'Player' });
         }
       });
@@ -73,9 +76,11 @@ export default function HeavenlyTrialPage() {
     score: 0,
     topic: '',
     topicSubmitted: false,
+    answers: {},
   } : null;
 
   const opponent = game && user ? game.players.find(p => p.uid !== user.uid) : null;
+  const me = game && user ? game.players.find(p => p.uid === user.uid) : null;
 
   // Game state listeners
   useEffect(() => {
@@ -91,22 +96,36 @@ export default function HeavenlyTrialPage() {
       } else {
         setGame(null);
       }
+    }, (error) => {
+        console.error("Error listening to game state:", error);
+        toast({ title: "Connection Error", description: "Could not sync game state.", variant: "destructive"});
     });
   
     return () => unsubscribe();
-  }, [user]);
+  }, [user, toast]);
   
   useEffect(() => {
-    if (game?.state === 'topic-selection' || (game?.state === 'round-1' || game?.state === 'round-2')) {
-      const interval = setInterval(() => {
-        const endTime = (game.timestamps[game.state] as any)?.seconds;
-        if (endTime) {
+    if (game?.state === 'round-1' || game?.state === 'round-2') {
+        const roundStartTime = (game.timestamps[game.state] as any)?.seconds;
+        if(!roundStartTime) return;
+        
+        const interval = setInterval(() => {
           const now = Date.now() / 1000;
-          const newTimeLeft = Math.max(0, Math.ceil(endTime - now));
+          const newTimeLeft = Math.max(0, Math.ceil(roundStartTime + 120 - now));
           setTimeLeft(newTimeLeft);
-        }
-      }, 1000);
-      return () => clearInterval(interval);
+        }, 1000);
+        return () => clearInterval(interval);
+    }
+    if(game?.state === 'topic-selection') {
+         const createdAtTime = (game.createdAt as any)?.seconds;
+         if(!createdAtTime) return;
+
+         const interval = setInterval(() => {
+            const now = Date.now() / 1000;
+            const newTimeLeft = Math.max(0, Math.ceil(createdAtTime + 30 - now));
+            setTimeLeft(newTimeLeft);
+         }, 1000);
+         return () => clearInterval(interval);
     }
   }, [game]);
   
@@ -119,20 +138,23 @@ export default function HeavenlyTrialPage() {
     const querySnapshot = await getDocs(matchmakingQuery);
 
     if (querySnapshot.empty) {
-      // No one waiting, so create a new entry
       await setDoc(doc(db, 'matchmaking', player.uid), {
         player,
         status: 'waiting',
         createdAt: serverTimestamp(),
       });
     } else {
-      // Found an opponent
       const opponentEntry = querySnapshot.docs[0];
       const opponentPlayer = opponentEntry.data().player as Player;
 
+      if(opponentPlayer.uid === player.uid) {
+          // It's me, just waiting. Do nothing.
+          return;
+      }
+      
       await deleteDoc(doc(db, 'matchmaking', opponentEntry.id));
       
-      const newGame: Game = {
+      const newGame: Omit<Game, 'id'> = {
         players: [player, opponentPlayer],
         playerIds: [player.uid, opponentPlayer.uid],
         state: 'topic-selection',
@@ -141,10 +163,7 @@ export default function HeavenlyTrialPage() {
         currentQuestionIndex: 0,
         createdAt: serverTimestamp(),
         timestamps: {
-          'topic-selection': {
-            seconds: Math.floor(Date.now() / 1000) + 15,
-            nanoseconds: 0,
-          }
+          'topic-selection': serverTimestamp()
         },
       };
 
@@ -163,24 +182,36 @@ export default function HeavenlyTrialPage() {
   
   const handleSubmitTopic = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!game || !user || !topic) return;
+    if (!game || !user || !topic.trim() || me?.topicSubmitted) return;
+    
+    toast({ title: "Topic submitted!", description: `You chose: ${topic}`});
 
     const playerIndex = game.players.findIndex(p => p.uid === user.uid);
     if (playerIndex !== -1) {
-      const updatedPlayers = [...game.players];
-      updatedPlayers[playerIndex].topic = topic;
-      updatedPlayers[playerIndex].topicSubmitted = true;
-      await updateDoc(doc(db, 'games', game.id!), { players: updatedPlayers });
+      const updatePath = `players.${playerIndex}.topic`;
+      const submittedPath = `players.${playerIndex}.topicSubmitted`;
+      await updateDoc(doc(db, 'games', game.id!), { 
+          [updatePath]: topic,
+          [submittedPath]: true
+      });
     }
   };
   
   const handleAnswerSubmit = async (questionIndex: number, selectedOption: string) => {
-    if (!game || !user) return;
+    if (!game || !user || !game.id) return;
+    
     setUserAnswers(prev => ({...prev, [questionIndex]: selectedOption}));
+    
+    try {
+        await onPlayerAnswer({ gameId: game.id, questionIndex, answer: selectedOption });
+    } catch(error) {
+        console.error("Error submitting answer:", error);
+        toast({ title: "Submission Error", description: "Could not submit your answer.", variant: "destructive"});
+    }
   };
 
   const renderContent = () => {
-    if (!user) return <p>Please log in to play.</p>;
+    if (!user || !appUser) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Loading user data...</p></div>;
 
     if (isSearching) {
       return (
@@ -211,7 +242,6 @@ export default function HeavenlyTrialPage() {
     }
 
     if (game.state === 'topic-selection') {
-      const me = game.players.find(p => p.uid === user.uid);
       return (
         <div className="text-center">
             <h2 className="text-2xl font-bold mb-2">Choose Your Weapon!</h2>
@@ -219,10 +249,10 @@ export default function HeavenlyTrialPage() {
             <div className="flex justify-around items-start mb-6">
                 <div className="flex flex-col items-center">
                     <Avatar className="h-16 w-16 mb-2">
-                        <AvatarImage src={player?.photoURL || undefined} />
-                        <AvatarFallback>{player?.displayName.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={me?.photoURL || undefined} />
+                        <AvatarFallback>{me?.displayName.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <p className="font-semibold">{player?.displayName}</p>
+                    <p className="font-semibold">{me?.displayName}</p>
                      {me?.topicSubmitted ? <p className="text-green-500">Topic: {me.topic}</p> : <p>Waiting...</p>}
                 </div>
                  <p className="text-4xl font-bold pt-6">VS</p>
@@ -247,14 +277,14 @@ export default function HeavenlyTrialPage() {
     
     if (game.state === 'round-1' || game.state === 'round-2') {
        const currentQuestion = game.questions[game.currentQuestionIndex];
-       if(!currentQuestion) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Generating questions...</p></div>;
+       if(!currentQuestion) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Waiting for round to start...</p></div>;
        
-       const roundTopic = game.state === 'round-1' ? game.players[0].topic : game.players[1].topic;
+       const roundTopicOwner = game.state === 'round-1' ? game.players[0] : game.players[1];
        
        return (
          <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">{game.state === 'round-1' ? 'Round 1' : 'Round 2'}: {roundTopic}</h2>
+                <h2 className="text-2xl font-bold">{game.state.replace('-', ' ')}: {roundTopicOwner.topic}</h2>
                 <div className="flex items-center gap-2 font-bold text-lg">
                     <Clock className="h-6 w-6" />
                     <span>{timeLeft}s</span>
@@ -267,26 +297,25 @@ export default function HeavenlyTrialPage() {
                 <RadioGroup onValueChange={(val) => handleAnswerSubmit(game.currentQuestionIndex, val)} value={userAnswers[game.currentQuestionIndex] || ''} className="space-y-2">
                     {currentQuestion.options.map((option, i) => (
                         <div key={i} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option} id={`q${game.currentQuestionIndex}o${i}`} />
+                            <RadioGroupItem value={option} id={`q${game.currentQuestionIndex}o${i}`} disabled={!!me?.answers[game.currentQuestionIndex]}/>
                             <Label htmlFor={`q${game.currentQuestionIndex}o${i}`}>{option}</Label>
                         </div>
                     ))}
                 </RadioGroup>
             </div>
+            {me?.answers[game.currentQuestionIndex] && <p className="text-center text-green-500 font-bold">Answer submitted! Waiting for opponent...</p>}
          </div>
        )
     }
 
     if (game.state === 'finished') {
-        const winner = game.players.reduce((a, b) => a.score > b.score ? a : b);
-        const loser = game.players.find(p => p.uid !== winner.uid);
-        const isTie = loser && winner.score === loser.score;
+        const winner = game.players.reduce((a, b) => a.score > b.score ? a : (b.score > a.score ? b : null));
         
         return (
             <div className="text-center">
                 <Trophy className="h-20 w-20 text-yellow-400 mx-auto mb-4" />
                 <h2 className="text-3xl font-bold mb-2">
-                    {isTie ? "It's a Tie!" : `${winner.displayName} is Victorious!`}
+                    {winner ? `${winner.displayName} is Victorious!` : "It's a Tie!"}
                 </h2>
 
                 <div className="flex justify-around items-center my-8">

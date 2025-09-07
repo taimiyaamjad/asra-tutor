@@ -53,6 +53,7 @@ export interface Player {
   score: number;
   topic: string;
   topicSubmitted: boolean;
+  answers: { [questionIndex: number]: string };
 }
 
 export type GameState = 'topic-selection' | 'round-1' | 'round-2' | 'finished';
