@@ -57,6 +57,9 @@ export default function HeavenlyTrialPage() {
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if(doc.exists()) {
           setAppUser({ uid: user.uid, ...doc.data() } as AppUser);
+        } else {
+          // If the user doc doesn't exist for some reason, create a fallback
+           setAppUser({ uid: user.uid, email: user.email, role: 'student', firstName: user.displayName || 'Player' });
         }
       });
       return () => unsubscribe();
