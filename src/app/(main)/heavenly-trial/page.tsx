@@ -26,9 +26,8 @@ import {
   deleteDoc,
   serverTimestamp,
   getDoc,
-  httpsCallable,
 } from 'firebase/firestore';
-import { getFunctions } from 'firebase/functions';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { useToast } from '@/hooks/use-toast';
 import type { Game, Player, GameState, AppUser, Quiz, QuizQuestion } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
