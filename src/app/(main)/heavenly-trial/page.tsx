@@ -54,11 +54,12 @@ export default function HeavenlyTrialPage() {
   useEffect(() => {
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
-      getDoc(userDocRef).then((doc) => {
+      const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if(doc.exists()) {
           setAppUser({ uid: user.uid, ...doc.data() } as AppUser);
         }
       });
+      return () => unsubscribe();
     }
   }, [user]);
   
@@ -130,7 +131,7 @@ export default function HeavenlyTrialPage() {
       
       const newGame: Game = {
         players: [player, opponentPlayer],
-        playerIds: [player.uid, opponentPlayer.id],
+        playerIds: [player.uid, opponentPlayer.uid],
         state: 'topic-selection',
         round: 1,
         questions: [],
