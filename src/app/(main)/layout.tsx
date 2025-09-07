@@ -18,6 +18,7 @@ import {
   Settings,
   FileText,
   Users,
+  Swords,
 } from 'lucide-react';
 
 import {
@@ -66,6 +67,11 @@ const menuItems = [
     href: '/quiz',
     icon: PenSquare,
     label: 'Quiz Generator',
+  },
+   {
+    href: '/heavenly-trial',
+    icon: Swords,
+    label: 'Heavenly Trial',
   },
   {
     href: '/articles',
