@@ -46,7 +46,7 @@ const examCategories = [
     },
     {
         category: "Science & Research",
-        exams: ["JAM (IIT JAM)", "GATE", "CSIR UGC NET", "UGC NET", "ICAR ARS NET"]
+        exams: ["JAM (IIT JAM)", "GATE", "ICAR ARS NET"]
     },
     {
         category: "Civil Services & Government Jobs",
