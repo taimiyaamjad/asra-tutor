@@ -40,6 +40,8 @@ const prompt = ai.definePrompt({
   prompt: `You are a quiz generator. Generate a quiz on the topic of {{topic}} with {{numQuestions}} questions.
 The difficulty of the quiz should be {{difficulty}}.
 
+When the difficulty is set to 'hard', you must generate questions of the highest possible complexity and challenge for that topic, suitable for testing an expert's knowledge.
+
 Your output MUST be a valid JSON object that adheres to the provided schema. Do not include any other text, formatting, or code fences.
 
 Example of the required JSON format:
