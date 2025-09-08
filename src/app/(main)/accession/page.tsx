@@ -14,7 +14,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
@@ -29,7 +31,48 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { cn } from '@/lib/utils';
 
 
-const examTypes = ['NEET', 'Jee Mains', 'Jee Advance', 'B. Ed'];
+const examCategories = [
+    {
+        category: "Engineering",
+        exams: ["JEE Main", "JEE Advanced", "BITSAT", "VITEEE", "SRMJEEE", "COMEDK UGET", "WBJEE", "MHT CET"]
+    },
+    {
+        category: "Medical",
+        exams: ["NEET UG", "NEET PG", "AIIMS PG", "FMGE", "INI CET"]
+    },
+    {
+        category: "Management (MBA)",
+        exams: ["CAT", "XAT", "CMAT", "MAT", "NMAT", "SNAP", "IIFT"]
+    },
+    {
+        category: "Science & Research",
+        exams: ["JAM (IIT JAM)", "GATE", "CSIR UGC NET", "UGC NET", "ICAR ARS NET"]
+    },
+    {
+        category: "Civil Services & Government Jobs",
+        exams: ["UPSC Civil Services Examination (CSE)", "UPSC Combined Defence Services (CDS)", "UPSC Engineering Services Examination (ESE)", "UPSC NDA", "UPSC CAPF", "SSC CGL", "SSC CHSL", "SSC MTS", "IBPS PO", "IBPS Clerk", "SBI PO", "RBI Grade B", "LIC AAO"]
+    },
+    {
+        category: "Law",
+        exams: ["CLAT", "AILET", "LSAT India"]
+    },
+    {
+        category: "Universities & Common Entrance Tests",
+        exams: ["CUET", "IPU CET", "TISS NET"]
+    },
+    {
+        category: "Design & Architecture",
+        exams: ["NID DAT", "NIFT", "NATA", "CEED"]
+    },
+    {
+        category: "Defence",
+        exams: ["NDA", "CDS", "AFCAT"]
+    },
+    {
+        category: "Other",
+        exams: ["B. Ed"]
+    }
+];
 
 interface UserAnswers {
   [sectionIndex: number]: {
@@ -135,7 +178,7 @@ export default function AccessionPage() {
     });
 
     setResult({
-        score: totalQuestions > 0 ? (correctCount / attemptedCount) * 100 : 0,
+        score: totalQuestions > 0 && attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0,
         correctAnswers: correctCount,
         totalQuestions,
         attemptedQuestions: attemptedCount,
@@ -275,10 +318,15 @@ export default function AccessionPage() {
                   <SelectValue placeholder="Select exam" />
                 </SelectTrigger>
                 <SelectContent>
-                  {examTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
+                  {examCategories.map((category) => (
+                    <SelectGroup key={category.category}>
+                        <SelectLabel>{category.category}</SelectLabel>
+                        {category.exams.map((type) => (
+                            <SelectItem key={type} value={type}>
+                                {type}
+                            </SelectItem>
+                        ))}
+                    </SelectGroup>
                   ))}
                 </SelectContent>
               </Select>
