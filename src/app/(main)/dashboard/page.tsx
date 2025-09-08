@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -12,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Activity, Book, Target } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
-import { collection, query, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, onSnapshot, where, orderBy } from 'firebase/firestore';
 
 const PenSquare = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" /></svg>
@@ -20,13 +21,6 @@ const PenSquare = (props: React.SVGProps<SVGSVGElement>) => (
 const MessageSquare = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
 );
-
-const progress = [
-  { subject: 'Algebra', value: 75 },
-  { subject: 'Calculus', value: 45 },
-  { subject: 'History', value: 92 },
-  { subject: 'Physics', value: 60 },
-];
 
 const recommendedTopics = [
   {
@@ -46,6 +40,12 @@ const recommendedTopics = [
   },
 ];
 
+interface LearningProgress {
+    topic: string;
+    averageScore: number;
+    attempts: number;
+}
+
 export default function DashboardPage() {
   const [user] = useAuthState(auth);
   const [stats, setStats] = useState([
@@ -62,17 +62,36 @@ export default function DashboardPage() {
     { title: 'Average Score', value: '0%', icon: Target },
     { title: 'Active Streak', value: '0 days', icon: Activity },
   ]);
+  const [learningProgress, setLearningProgress] = useState<LearningProgress[]>([]);
 
   useEffect(() => {
     if (user) {
       // Listener for quiz attempts
-      const quizQuery = query(collection(db, 'users', user.uid, 'quizAttempts'));
+      const quizQuery = query(collection(db, 'users', user.uid, 'quizAttempts'), orderBy('createdAt', 'desc'));
       const unsubscribeQuizzes = onSnapshot(quizQuery, (snapshot) => {
         const quizAttempts = snapshot.docs.map(doc => doc.data());
         const totalQuizzes = quizAttempts.length;
         const averageScore = totalQuizzes > 0 
           ? quizAttempts.reduce((acc, curr) => acc + curr.score, 0) / totalQuizzes
           : 0;
+
+        // Calculate progress per topic
+        const progressByTopic: { [key: string]: { totalScore: number; count: number } } = {};
+        quizAttempts.forEach(attempt => {
+            if (!progressByTopic[attempt.topic]) {
+                progressByTopic[attempt.topic] = { totalScore: 0, count: 0 };
+            }
+            progressByTopic[attempt.topic].totalScore += attempt.score;
+            progressByTopic[attempt.topic].count++;
+        });
+
+        const formattedProgress = Object.entries(progressByTopic).map(([topic, data]) => ({
+            topic,
+            averageScore: data.totalScore / data.count,
+            attempts: data.count,
+        })).slice(0, 5); // Take latest 5 topics
+
+        setLearningProgress(formattedProgress);
 
         setStats((prev) =>
           prev.map((stat) => {
@@ -140,21 +159,28 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Learning Progress</CardTitle>
             <CardDescription>
-              Your progress across different subjects.
+              Your average scores across different subjects.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {progress.map((item, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium">{item.subject}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {item.value}%
-                  </span>
+            {learningProgress.length > 0 ? (
+                learningProgress.map((item, index) => (
+                <div key={index} className="space-y-2">
+                    <div className="flex justify-between">
+                    <span className="text-sm font-medium capitalize">{item.topic}</span>
+                    <span className="text-sm text-muted-foreground">
+                        {item.averageScore.toFixed(0)}%
+                    </span>
+                    </div>
+                    <Progress value={item.averageScore} aria-label={`${item.topic} progress`} />
                 </div>
-                <Progress value={item.value} aria-label={`${item.subject} progress`} />
-              </div>
-            ))}
+                ))
+            ) : (
+                <div className="text-center text-muted-foreground py-8">
+                    <p>No quiz data yet.</p>
+                    <p>Complete a quiz to see your progress here!</p>
+                </div>
+            )}
           </CardContent>
         </Card>
 
