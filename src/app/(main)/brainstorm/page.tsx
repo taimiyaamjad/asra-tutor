@@ -98,7 +98,7 @@ export default function BrainstormPage() {
           </div>
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="gap-1" disabled={!user || !appUser}>
+                <Button size="sm" className="gap-1">
                     <PlusCircle className="h-4 w-4" />
                     New Post
                 </Button>
@@ -121,7 +121,7 @@ export default function BrainstormPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleCreatePost} disabled={isSubmitting}>
+                    <Button onClick={handleCreatePost} disabled={isSubmitting || !user}>
                         {isSubmitting ? 'Submitting...' : 'Submit Post'}
                     </Button>
                 </DialogFooter>
