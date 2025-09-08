@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { marked } from 'marked';
 
 export default function NotesPage() {
   const [topic, setTopic] = useState('');
@@ -49,7 +50,8 @@ export default function NotesPage() {
     setIsGenerated(false);
     try {
       const response = await generateNotes({ topic, noteType });
-      setNotesContent(response.notes);
+      const htmlContent = await marked.parse(response.notes);
+      setNotesContent(htmlContent);
       setIsGenerated(true);
     } catch (error) {
       console.error('Failed to generate notes:', error);
@@ -84,7 +86,7 @@ export default function NotesPage() {
       return (
         <article
           className="prose prose-sm dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: notesContent.replace(/\\n/g, '<br />') }}
+          dangerouslySetInnerHTML={{ __html: notesContent }}
         />
       );
     }

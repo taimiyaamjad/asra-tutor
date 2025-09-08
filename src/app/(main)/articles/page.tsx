@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateArticle } from '@/ai/flows/generate-article';
 import { FileText, ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { marked } from 'marked';
 
 const trendingTopics = [
   'The Future of Artificial Intelligence',
@@ -36,7 +37,8 @@ export default function ArticlesPage() {
     setArticleContent('');
     try {
       const response = await generateArticle({ topic });
-      setArticleContent(response.article);
+      const htmlContent = await marked.parse(response.article);
+      setArticleContent(htmlContent);
     } catch (error) {
       console.error('Failed to generate article:', error);
       toast({
@@ -109,7 +111,7 @@ export default function ArticlesPage() {
           ) : (
              <article
                 className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: articleContent.replace(/\\n/g, '<br />') }}
+                dangerouslySetInnerHTML={{ __html: articleContent }}
               />
           )}
         </ScrollArea>
