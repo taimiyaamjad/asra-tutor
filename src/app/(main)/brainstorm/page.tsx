@@ -91,15 +91,13 @@ export default function BrainstormPage() {
     }
   };
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = async (post: Post) => {
       if (!user) return;
-      const postToDelete = posts.find(p => p.id === postId);
-      if (!postToDelete) return;
-      if (appUser?.role !== 'admin' && user.uid !== postToDelete.authorId) return;
+      if (appUser?.role !== 'admin' && user.uid !== post.authorId) return;
 
       if (confirm('Are you sure you want to delete this post and all its comments?')) {
           try {
-              await deleteDoc(doc(db, 'posts', postId));
+              await deleteDoc(doc(db, 'posts', post.id));
               toast({ title: 'Post deleted successfully.' });
           } catch(e) {
               console.error("Error deleting post:", e);
@@ -173,14 +171,16 @@ export default function BrainstormPage() {
                         <AvatarImage src={post.authorPhotoURL || undefined} alt={post.authorName}/>
                         <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
-                      <Link href={`/brainstorm/${post.id}`} className="flex-1 block">
-                          <h3 className="font-semibold text-lg hover:underline">{post.title}</h3>
-                          <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
-                              <p>by {post.authorName}</p>
-                              <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
-                          </div>
-                      </Link>
-                      <div className="flex items-center gap-4 text-muted-foreground">
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/brainstorm/${post.id}`} className="block">
+                            <h3 className="font-semibold text-lg hover:underline truncate">{post.title}</h3>
+                            <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                                <p className="truncate">by {post.authorName}</p>
+                                <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
+                            </div>
+                        </Link>
+                      </div>
+                      <div className="flex items-center gap-4 text-muted-foreground shrink-0">
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-5 w-5" />
                             <span>{post.commentCount || 0}</span>
@@ -192,7 +192,7 @@ export default function BrainstormPage() {
                                   className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
                                   onClick={(e) => {
                                       e.stopPropagation();
-                                      handleDeletePost(post.id);
+                                      handleDeletePost(post);
                                   }}
                                   aria-label="Delete post"
                               >
