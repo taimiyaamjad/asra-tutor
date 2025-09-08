@@ -86,9 +86,9 @@ const menuItems = [
     label: 'Articles',
   },
   {
-    href: '/brainstorm',
+    href: '/question-realm',
     icon: Lightbulb,
-    label: 'Brainstorm',
+    label: 'Question Realm',
   },
   {
     href: '/admin',
