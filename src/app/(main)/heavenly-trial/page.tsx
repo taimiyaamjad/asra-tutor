@@ -37,10 +37,9 @@ import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-const randomTopics = ["History", "Science", "Math", "Literature", "Geography", "Art"];
-
 const functions = getFunctions(auth.app);
 const onPlayerAnswer = httpsCallable(functions, 'onPlayerAnswer');
+const onTopicSubmit = httpsCallable(functions, 'onTopicSubmit');
 
 
 export default function HeavenlyTrialPage() {
@@ -50,7 +49,6 @@ export default function HeavenlyTrialPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [topic, setTopic] = useState('');
   const [timeLeft, setTimeLeft] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   
   const { toast } = useToast();
 
@@ -104,28 +102,29 @@ export default function HeavenlyTrialPage() {
   }, [user, toast]);
   
   useEffect(() => {
-    if (game?.state === 'round-1' || game?.state === 'round-2') {
+    if (!game) return;
+
+    let timer: NodeJS.Timeout;
+    if (game.state === 'round-1' || game.state === 'round-2') {
         const roundStartTime = (game.timestamps[game.state] as any)?.seconds;
         if(!roundStartTime) return;
         
-        const interval = setInterval(() => {
+        timer = setInterval(() => {
           const now = Date.now() / 1000;
           const newTimeLeft = Math.max(0, Math.ceil(roundStartTime + 120 - now));
           setTimeLeft(newTimeLeft);
         }, 1000);
-        return () => clearInterval(interval);
-    }
-    if(game?.state === 'topic-selection') {
-         // createdAt might be a server timestamp object initially, convert to seconds if needed
-         const createdAtTime = game.createdAt ? (game.createdAt as any).seconds || Math.floor(Date.now() / 1000) : Math.floor(Date.now() / 1000);
+    } else if (game.state === 'topic-selection') {
+         const createdAtTime = (game.createdAt as any)?.seconds;
+         if (!createdAtTime) return;
 
-         const interval = setInterval(() => {
+         timer = setInterval(() => {
             const now = Date.now() / 1000;
             const newTimeLeft = Math.max(0, Math.ceil(createdAtTime + 30 - now));
             setTimeLeft(newTimeLeft);
          }, 1000);
-         return () => clearInterval(interval);
     }
+    return () => clearInterval(timer);
   }, [game]);
   
   const handleFindMatch = async () => {
@@ -147,7 +146,6 @@ export default function HeavenlyTrialPage() {
       const opponentPlayer = opponentEntry.data().player as Player;
 
       if(opponentPlayer.uid === player.uid) {
-          // It's me, just waiting. Do nothing.
           return;
       }
       
@@ -161,10 +159,9 @@ export default function HeavenlyTrialPage() {
         questions: [],
         currentQuestionIndex: 0,
         createdAt: serverTimestamp(),
-        timestamps: {
-          'topic-selection': serverTimestamp()
-        },
+        timestamps: { },
       };
+      // Topic selection timestamp will be set by the 'createdAt' field.
 
       const newGameRef = doc(collection(db, 'games'));
       await setDoc(newGameRef, newGame);
@@ -184,21 +181,17 @@ export default function HeavenlyTrialPage() {
     if (!game || !user || !topic.trim() || me?.topicSubmitted) return;
     
     toast({ title: "Topic submitted!", description: `You chose: ${topic}`});
-
-    const playerIndex = game.players.findIndex(p => p.uid === user.uid);
-    if (playerIndex !== -1) {
-      const gameRef = doc(db, 'games', game.id!);
-      await updateDoc(gameRef, {
-        [`players.${playerIndex}.topic`]: topic,
-        [`players.${playerIndex}.topicSubmitted`]: true
-      });
+    
+    try {
+        await onTopicSubmit({ gameId: game.id, topic: topic });
+    } catch(error) {
+        console.error("Error submitting topic:", error);
+        toast({ title: "Submission Error", description: "Could not submit your topic.", variant: "destructive"});
     }
   };
   
   const handleAnswerSubmit = async (questionIndex: number, selectedOption: string) => {
     if (!game || !user || !game.id) return;
-    
-    setUserAnswers(prev => ({...prev, [questionIndex]: selectedOption}));
     
     try {
         await onPlayerAnswer({ gameId: game.id, questionIndex, answer: selectedOption });
@@ -275,14 +268,15 @@ export default function HeavenlyTrialPage() {
     
     if (game.state === 'round-1' || game.state === 'round-2') {
        const currentQuestion = game.questions[game.currentQuestionIndex];
-       if(!currentQuestion) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Waiting for round to start...</p></div>;
+       if(!currentQuestion) return <div className="text-center p-8"><svg className="animate-spin h-10 w-10 text-primary mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p className="mt-4">Waiting for questions to be generated...</p></div>;
        
-       const roundTopicOwner = game.state === 'round-1' ? game.players.find(p => p.uid === game.playerIds[0]) : game.players.find(p => p.uid === game.playerIds[1]);
+       const topicOwnerUid = game.state === 'round-1' ? game.playerIds[0] : game.playerIds[1];
+       const roundTopicOwner = game.players.find(p => p.uid === topicOwnerUid);
 
        return (
          <div>
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">{game.state.replace('-', ' ')}: {roundTopicOwner?.topic}</h2>
+                <h2 className="text-2xl font-bold">Round {game.round}: {roundTopicOwner?.topic}</h2>
                 <div className="flex items-center gap-2 font-bold text-lg">
                     <Clock className="h-6 w-6" />
                     <span>{timeLeft}s</span>
@@ -292,7 +286,7 @@ export default function HeavenlyTrialPage() {
 
             <div className="mb-6">
                 <p className="text-lg font-semibold mb-4">({game.currentQuestionIndex + 1}/5) {currentQuestion.question}</p>
-                <RadioGroup onValueChange={(val) => handleAnswerSubmit(game.currentQuestionIndex, val)} value={userAnswers[game.currentQuestionIndex] || ''} className="space-y-2">
+                <RadioGroup onValueChange={(val) => handleAnswerSubmit(game.currentQuestionIndex, val)} value={(me?.answers || {})[game.currentQuestionIndex] || ''} className="space-y-2">
                     {currentQuestion.options.map((option, i) => (
                         <div key={i} className="flex items-center space-x-2">
                             <RadioGroupItem value={option} id={`q${game.currentQuestionIndex}o${i}`} disabled={!!(me?.answers || {})[game.currentQuestionIndex]}/>
