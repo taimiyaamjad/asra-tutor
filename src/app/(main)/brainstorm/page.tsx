@@ -92,7 +92,10 @@ export default function BrainstormPage() {
   };
 
   const handleDeletePost = async (postId: string) => {
-      if (appUser?.role !== 'admin') return;
+      if (!user) return;
+      const postToDelete = posts.find(p => p.id === postId);
+      if (!postToDelete) return;
+      if (appUser?.role !== 'admin' && user.uid !== postToDelete.authorId) return;
 
       if (confirm('Are you sure you want to delete this post and all its comments?')) {
           try {
@@ -161,7 +164,9 @@ export default function BrainstormPage() {
                 </Card>
             ))
           ) : posts.length > 0 ? (
-            posts.map((post) => (
+            posts.map((post) => {
+              const canDelete = user && (appUser?.role === 'admin' || user.uid === post.authorId);
+              return (
               <Card key={post.id} className="hover:bg-muted/50 transition-colors p-0">
                   <div className="flex items-start gap-4 p-4">
                       <Avatar className="h-10 w-10 border">
@@ -180,7 +185,7 @@ export default function BrainstormPage() {
                             <MessageSquare className="h-5 w-5" />
                             <span>{post.commentCount || 0}</span>
                           </div>
-                          {appUser?.role === 'admin' && (
+                          {canDelete && (
                               <Button
                                   variant="ghost"
                                   size="icon"
@@ -197,7 +202,7 @@ export default function BrainstormPage() {
                       </div>
                   </div>
               </Card>
-            ))
+            )})
           ) : (
             <div className="text-center py-12 text-muted-foreground">
                 <Lightbulb className="h-12 w-12 mx-auto mb-4" />

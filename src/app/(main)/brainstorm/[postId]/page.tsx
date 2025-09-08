@@ -113,7 +113,9 @@ export default function PostPage() {
     };
     
     const handleDeletePost = async () => {
-        if (!user || appUser?.role !== 'admin') return;
+        if (!user || !post) return;
+        if (appUser?.role !== 'admin' && user.uid !== post.authorId) return;
+
 
         if (confirm('Are you sure you want to delete this post and all its comments? This action cannot be undone.')) {
             try {
@@ -153,6 +155,8 @@ export default function PostPage() {
         )
     }
     
+    const canDelete = user && (appUser?.role === 'admin' || user.uid === post.authorId);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -160,7 +164,7 @@ export default function PostPage() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to all posts
                 </Button>
-                {appUser?.role === 'admin' && (
+                {canDelete && (
                     <Button variant="destructive" size="sm" onClick={handleDeletePost}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Post
