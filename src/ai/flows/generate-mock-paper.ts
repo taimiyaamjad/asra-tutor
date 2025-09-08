@@ -31,6 +31,8 @@ Here are the structures for the supported exams:
 For all multiple-choice questions (MCQs), provide 4 options.
 For numerical questions, the 'options' array should be empty, and the 'answer' should be the numerical value as a string.
 
+CRITICAL: Every single question object MUST have an 'answer' field. Do not forget to include the 'answer' for every question.
+
 Your output MUST be a valid JSON object that adheres to the provided schema. Do not include any other text, formatting, or code fences. Ensure the response is a single, complete JSON object.
 `,
 });
