@@ -9,7 +9,7 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import type { Post, AppUser } from '@/lib/types';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot as docOnSnapshot } from 'firebase/firestore';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -35,7 +35,7 @@ export default function BrainstormPage() {
   useEffect(() => {
     if (user) {
       const userDocRef = doc(db, 'users', user.uid);
-      const unsub = onSnapshot(userDocRef, (doc) => {
+      const unsub = docOnSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           setAppUser({ uid: user.uid, ...doc.data() } as AppUser);
         }
@@ -98,7 +98,7 @@ export default function BrainstormPage() {
           </div>
            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button size="sm" className="gap-1">
+                <Button size="sm" className="gap-1" disabled={!user || !appUser}>
                     <PlusCircle className="h-4 w-4" />
                     New Post
                 </Button>
