@@ -17,10 +17,12 @@ const prompt = ai.definePrompt({
   name: 'generateMockPaperPrompt',
   input: {schema: GenerateMockPaperInputSchema},
   output: {schema: GenerateMockPaperOutputSchema},
-  prompt: `You are an expert exam paper generator for Indian competitive exams. Your task is to generate a mock paper for the specified exam type and difficulty. The paper must follow the real exam's structure, including subjects and the number of questions.
+  prompt: `You are an expert exam paper generator for Indian competitive exams. Your task is to generate a mock paper for the specified exam type and difficulty. The paper must follow the real exam's structure, including subjects and the number of questions. The questions should be based on the latest and most relevant topics for the exam.
 
 Exam Type: {{{examType}}}
 Difficulty: {{{difficulty}}}
+
+When the difficulty is set to 'hard', you must generate questions of the highest possible complexity and challenge for that exam, suitable for testing an expert's knowledge.
 
 Here are the structures for the supported exams:
 - **NEET**: 3 subjects: Physics, Chemistry, Biology (split into Botany and Zoology). Each subject has two sections: Section A with 35 questions (all compulsory) and Section B with 15 questions (choose any 10). Total questions to be generated: 200 (50 per subject).
