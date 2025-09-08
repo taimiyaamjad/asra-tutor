@@ -22,23 +22,28 @@ const MessageSquare = (props: React.SVGProps<SVGSVGElement>) => (
   <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
 );
 
-const recommendedTopics = [
-  {
-    title: 'Introduction to Derivatives',
-    description: 'Calculus',
-    icon: Book,
-  },
-  {
-    title: 'The World Wars',
-    description: 'History',
-    icon: Book,
-  },
-  {
-    title: 'Newtonian Mechanics',
-    description: 'Physics',
-    icon: Book,
-  },
-];
+const topicSuggestions: { [key: string]: string[] } = {
+  default: ['Quantum Physics', 'World History', 'Differential Equations', 'Organic Chemistry'],
+  calculus: ['Linear Algebra', 'Differential Equations'],
+  history: ['Ancient Civilizations', 'Renaissance Art'],
+  physics: ['Quantum Mechanics', 'Astrophysics'],
+  chemistry: ['Organic Chemistry', 'Biochemistry'],
+};
+
+const getRecommendedTopic = (studiedTopics: string[]) => {
+    if (studiedTopics.length === 0) {
+        return { title: topicSuggestions.default[Math.floor(Math.random() * topicSuggestions.default.length)], description: 'New Subject' };
+    }
+    const lastStudied = studiedTopics[0]; // most recent topic
+    const suggestions = topicSuggestions[lastStudied.toLowerCase()] || topicSuggestions.default;
+    const unseenSuggestions = suggestions.filter(s => !studiedTopics.includes(s));
+    
+    if(unseenSuggestions.length > 0) {
+        return { title: unseenSuggestions[Math.floor(Math.random() * unseenSuggestions.length)], description: 'Related to your studies' };
+    }
+    // If all related are seen, pick a random default one
+    return { title: topicSuggestions.default[Math.floor(Math.random() * topicSuggestions.default.length)], description: 'New Subject' };
+}
 
 interface LearningProgress {
     topic: string;
@@ -63,6 +68,8 @@ export default function DashboardPage() {
     { title: 'Active Streak', value: '0 days', icon: Activity },
   ]);
   const [learningProgress, setLearningProgress] = useState<LearningProgress[]>([]);
+  const [recommendedTopics, setRecommendedTopics] = useState<{title: string, description: string, icon: React.ElementType}[]>([]);
+
 
   useEffect(() => {
     if (user) {
@@ -92,6 +99,15 @@ export default function DashboardPage() {
         })).slice(0, 5); // Take latest 5 topics
 
         setLearningProgress(formattedProgress);
+        
+        const studiedTopics = formattedProgress.map(p => p.topic);
+        const newRecs = Array.from({ length: 3 }).map(() => {
+            const rec = getRecommendedTopic(studiedTopics);
+            studiedTopics.push(rec.title); // Avoid duplicate recommendations in the same batch
+            return { ...rec, icon: Book };
+        });
+        setRecommendedTopics(newRecs);
+
 
         setStats((prev) =>
           prev.map((stat) => {
