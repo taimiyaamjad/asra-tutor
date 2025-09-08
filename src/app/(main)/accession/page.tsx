@@ -69,6 +69,14 @@ const examCategories = [
         exams: ["NDA", "CDS", "AFCAT"]
     },
     {
+        category: "Entrance",
+        exams: ["AMU 9th Entrance", "AMU 11th Entrance", "BHU 9th Entrance", "BHU 11th Entrance", "Jamia 9th Entrance", "Jamia 11th Entrance"]
+    },
+    {
+        category: "Teaching",
+        exams: ["CTET", "UGC NET", "CSIR UGC NET", "KVS Exam", "NVS Exam", "DSSSB Exam", "REET", "TNTET", "MPTET", "HTET", "APTET", "WBTET", "MAHA TET", "KTET", "GPSTR"]
+    },
+    {
         category: "Other",
         exams: ["B. Ed"]
     }
