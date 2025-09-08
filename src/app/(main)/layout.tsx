@@ -21,6 +21,7 @@ import {
   Swords,
   ClipboardPen,
   Lightbulb,
+  BarChart,
 } from 'lucide-react';
 
 import {
@@ -89,6 +90,11 @@ const menuItems = [
     href: '/question-realm',
     icon: Lightbulb,
     label: 'Question Realm',
+  },
+  {
+    href: '/leaderboard',
+    icon: BarChart,
+    label: 'Leaderboard',
   },
   {
     href: '/admin',
