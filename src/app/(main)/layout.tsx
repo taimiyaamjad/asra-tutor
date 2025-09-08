@@ -22,6 +22,7 @@ import {
   ClipboardPen,
   Lightbulb,
   BarChart,
+  Notebook,
 } from 'lucide-react';
 
 import {
@@ -85,6 +86,11 @@ const menuItems = [
     href: '/articles',
     icon: FileText,
     label: 'Articles',
+  },
+  {
+    href: '/notes',
+    icon: Notebook,
+    label: 'Notes',
   },
   {
     href: '/question-realm',
