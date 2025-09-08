@@ -20,6 +20,7 @@ import {
   Users,
   Swords,
   ClipboardPen,
+  Lightbulb,
 } from 'lucide-react';
 
 import {
@@ -83,6 +84,11 @@ const menuItems = [
     href: '/articles',
     icon: FileText,
     label: 'Articles',
+  },
+  {
+    href: '/brainstorm',
+    icon: Lightbulb,
+    label: 'Brainstorm',
   },
   {
     href: '/admin',

@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 import type { Timestamp } from 'firebase/firestore';
 
@@ -98,3 +99,25 @@ export const GenerateMockPaperOutputSchema = z.object({
 });
 export type GenerateMockPaperOutput = z.infer<typeof GenerateMockPaperOutputSchema>;
 export type MockPaper = z.infer<typeof GenerateMockPaperOutputSchema>;
+
+
+// Brainstorm Types
+export interface Post {
+    id: string;
+    title: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorPhotoURL?: string;
+    createdAt: Timestamp;
+    commentCount?: number;
+}
+
+export interface Comment {
+    id: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    authorPhotoURL?: string;
+    createdAt: Timestamp;
+}
