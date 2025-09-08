@@ -330,7 +330,7 @@ export default function AccessionPage() {
                     <SelectGroup key={category.category}>
                         <SelectLabel>{category.category}</SelectLabel>
                         {category.exams.map((type) => (
-                            <SelectItem key={type} value={type}>
+                            <SelectItem key={`${category.category}-${type}`} value={type}>
                                 {type}
                             </SelectItem>
                         ))}
