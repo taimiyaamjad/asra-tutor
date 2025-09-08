@@ -19,6 +19,7 @@ import {
   FileText,
   Users,
   Swords,
+  ClipboardPen,
 } from 'lucide-react';
 
 import {
@@ -72,6 +73,11 @@ const menuItems = [
     href: '/heavenly-trial',
     icon: Swords,
     label: 'Heavenly Trial',
+  },
+  {
+    href: '/accession',
+    icon: ClipboardPen,
+    label: 'Accession',
   },
   {
     href: '/articles',

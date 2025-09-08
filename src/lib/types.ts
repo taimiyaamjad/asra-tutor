@@ -71,3 +71,20 @@ export interface Game {
       [key in GameState]?: Timestamp;
   }
 }
+
+// Accession (Mock Paper) Types
+export interface MockPaperQuestion {
+  question: string;
+  options: string[];
+  answer: string;
+}
+
+export interface PaperSection {
+  sectionName: string;
+  questions: MockPaperQuestion[];
+}
+
+export interface MockPaper {
+  title: string;
+  sections: PaperSection[];
+}
