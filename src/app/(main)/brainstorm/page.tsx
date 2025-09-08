@@ -169,32 +169,32 @@ export default function BrainstormPage() {
             posts.map((post) => {
               const canDelete = user && (appUser?.role === 'admin' || user.uid === post.authorId);
               return (
-              <Card key={post.id} className="hover:bg-muted/50 transition-colors p-0">
-                  <div className="flex items-start gap-4 p-4">
-                      <Avatar className="h-10 w-10 border flex-shrink-0">
+              <Card key={post.id} className="hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-3 p-3">
+                      <Avatar className="h-9 w-9 border flex-shrink-0">
                         <AvatarImage src={post.authorPhotoURL || undefined} alt={post.authorName}/>
                         <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <Link href={`/brainstorm/${post.id}`} className="block">
-                            <h3 className="font-semibold text-lg hover:underline truncate">{post.title}</h3>
+                            <h3 className="font-semibold text-base hover:underline truncate">{post.title}</h3>
                         </Link>
-                        <div className="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
+                        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
                             <p className="truncate">by {post.authorName}</p>
                             <span className="hidden sm:inline">•</span>
                             <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
                         </div>
                       </div>
-                      <div className="flex flex-shrink-0 items-center gap-2 text-muted-foreground ml-auto">
+                      <div className="flex flex-shrink-0 items-center gap-2 text-muted-foreground ml-auto pl-2">
                           <div className="flex items-center gap-1">
-                            <MessageSquare className="h-5 w-5" />
-                            <span>{post.commentCount || 0}</span>
+                            <MessageSquare className="h-4 w-4" />
+                            <span className="text-sm">{post.commentCount || 0}</span>
                           </div>
                           {canDelete && (
                               <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 w-7"
                                   onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
