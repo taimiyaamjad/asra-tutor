@@ -185,7 +185,7 @@ export default function BrainstormPage() {
                             <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground shrink-0 ml-auto">
+                      <div className="flex flex-shrink-0 items-center gap-2 text-muted-foreground ml-auto">
                           <div className="flex items-center gap-1">
                             <MessageSquare className="h-5 w-5" />
                             <span>{post.commentCount || 0}</span>
