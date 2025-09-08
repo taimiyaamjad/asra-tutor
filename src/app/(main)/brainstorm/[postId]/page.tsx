@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { doc, getDoc, collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, orderBy, addDoc, serverTimestamp, runTransaction, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useParams, useRouter } from 'next/navigation';
 import type { Post, Comment as CommentType, AppUser } from '@/lib/types';
@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Trash2 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -52,6 +52,7 @@ export default function PostPage() {
                     setPost({ id: docSnap.id, ...docSnap.data() } as Post);
                 } else {
                     console.log("No such document!");
+                    setPost(null); // Set post to null if not found
                 }
                 setIsLoadingPost(false);
             });
@@ -79,16 +80,17 @@ export default function PostPage() {
         setIsSubmitting(true);
         try {
             const postRef = doc(db, 'posts', postId);
-            const commentRef = collection(db, 'posts', postId, 'comments');
+            const commentCollectionRef = collection(db, 'posts', postId, 'comments');
 
             await runTransaction(db, async (transaction) => {
-                const postDoc = await transaction.get(postRef);
+                 const postDoc = await transaction.get(postRef);
                  if (!postDoc.exists()) {
                     throw "Post does not exist!";
                 }
                 
                 // Add the new comment
-                addDoc(commentRef, {
+                const newCommentRef = doc(commentCollectionRef);
+                transaction.set(newCommentRef, {
                     content: newComment,
                     authorId: user.uid,
                     authorName: `${appUser.firstName || ''} ${appUser.lastName || ''}`.trim() || appUser.email,
@@ -107,6 +109,21 @@ export default function PostPage() {
             toast({ title: "Failed to add comment", description: "Please try again later.", variant: 'destructive'});
         } finally {
             setIsSubmitting(false);
+        }
+    };
+    
+    const handleDeletePost = async () => {
+        if (!user || appUser?.role !== 'admin') return;
+
+        if (confirm('Are you sure you want to delete this post and all its comments? This action cannot be undone.')) {
+            try {
+                await deleteDoc(doc(db, 'posts', postId));
+                toast({ title: "Post deleted successfully" });
+                router.push('/brainstorm');
+            } catch (error) {
+                console.error("Error deleting post:", error);
+                toast({ title: "Failed to delete post", variant: 'destructive' });
+            }
         }
     };
     
@@ -138,16 +155,24 @@ export default function PostPage() {
     
     return (
         <div className="space-y-6">
-            <Button variant="ghost" onClick={() => router.push('/brainstorm')} className="pl-0">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to all posts
-            </Button>
+            <div className="flex justify-between items-center">
+                 <Button variant="ghost" onClick={() => router.push('/brainstorm')} className="pl-0">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to all posts
+                </Button>
+                {appUser?.role === 'admin' && (
+                    <Button variant="destructive" size="sm" onClick={handleDeletePost}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete Post
+                    </Button>
+                )}
+            </div>
             <Card>
                 <CardHeader>
                     <CardTitle>{post.title}</CardTitle>
                     <CardDescription className="flex items-center gap-2 pt-2">
                         <Avatar className="h-6 w-6">
-                            <AvatarImage src={post.authorPhotoURL} />
+                            <AvatarImage src={post.authorPhotoURL || undefined} />
                             <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <span>{post.authorName}</span>
@@ -173,7 +198,7 @@ export default function PostPage() {
                         <Card key={comment.id} className="p-4">
                             <div className="flex items-start gap-4">
                                 <Avatar className="h-8 w-8 border">
-                                    <AvatarImage src={comment.authorPhotoURL} />
+                                    <AvatarImage src={comment.authorPhotoURL || undefined} />
                                     <AvatarFallback>{comment.authorName.charAt(0).toUpperCase()}</AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
@@ -200,7 +225,7 @@ export default function PostPage() {
                 <CardContent>
                      <div className="grid w-full gap-2">
                         <Textarea 
-                            placeholder="Type your comment here." 
+                            placeholder={user ? "Type your comment here." : "Please log in to comment."}
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             disabled={isSubmitting || !user}

@@ -240,3 +240,20 @@ export const onPlayerAnswer = functions.https.onCall(async (data, context) => {
         return { success: true };
     });
 });
+
+
+// Cloud Function to cascade delete comments when a post is deleted
+export const onPostDelete = functions.firestore
+    .document('posts/{postId}')
+    .onDelete(async (snap, context) => {
+        const { postId } = context.params;
+        const commentsRef = db.collection('posts').doc(postId).collection('comments');
+        const comments = await commentsRef.get();
+        
+        const batch = db.batch();
+        comments.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        return batch.commit();
+    });

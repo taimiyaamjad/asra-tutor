@@ -4,12 +4,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { PlusCircle, MessageSquare, Lightbulb } from 'lucide-react';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { PlusCircle, MessageSquare, Lightbulb, Trash2 } from 'lucide-react';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import type { Post, AppUser } from '@/lib/types';
-import { doc, getDoc, onSnapshot as docOnSnapshot } from 'firebase/firestore';
+import { onSnapshot as docOnSnapshot } from 'firebase/firestore';
 import Link from 'next/link';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function BrainstormPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -59,8 +60,12 @@ export default function BrainstormPage() {
   }, []);
 
   const handleCreatePost = async () => {
-    if (!user || !appUser || !newPostTitle.trim() || !newPostContent.trim()) {
-      toast({ title: "All fields are required.", variant: 'destructive'});
+    if (!user || !appUser) {
+        toast({ title: "You must be logged in to create a post.", variant: 'destructive'});
+        return;
+    }
+    if (!newPostTitle.trim() || !newPostContent.trim()) {
+      toast({ title: "Title and content are required.", variant: 'destructive'});
       return;
     }
     setIsSubmitting(true);
@@ -84,6 +89,20 @@ export default function BrainstormPage() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+      if (appUser?.role !== 'admin') return;
+
+      if (confirm('Are you sure you want to delete this post and all its comments?')) {
+          try {
+              await deleteDoc(doc(db, 'posts', postId));
+              toast({ title: 'Post deleted successfully.' });
+          } catch(e) {
+              console.error("Error deleting post:", e);
+              toast({ title: 'Error deleting post.', variant: 'destructive' });
+          }
+      }
   };
 
   return (
@@ -143,27 +162,41 @@ export default function BrainstormPage() {
             ))
           ) : posts.length > 0 ? (
             posts.map((post) => (
-              <Link href={`/brainstorm/${post.id}`} key={post.id} className="block">
-                <Card className="hover:bg-muted transition-colors p-4">
-                    <div className="flex items-start gap-4">
-                         <Avatar className="h-10 w-10 border">
-                            <AvatarImage src={post.authorPhotoURL} alt={post.authorName}/>
-                            <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                            <h3 className="font-semibold text-lg">{post.title}</h3>
-                            <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
-                                <p>by {post.authorName}</p>
-                                <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
+              <Card key={post.id} className="hover:bg-muted/50 transition-colors p-0">
+                  <div className="flex items-start gap-4 p-4">
+                      <Avatar className="h-10 w-10 border">
+                        <AvatarImage src={post.authorPhotoURL || undefined} alt={post.authorName}/>
+                        <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <Link href={`/brainstorm/${post.id}`} className="flex-1 block">
+                          <h3 className="font-semibold text-lg hover:underline">{post.title}</h3>
+                          <div className="text-sm text-muted-foreground flex items-center gap-4 mt-1">
+                              <p>by {post.authorName}</p>
+                              <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
+                          </div>
+                      </Link>
+                      <div className="flex items-center gap-4 text-muted-foreground">
+                          <div className="flex items-center gap-1">
                             <MessageSquare className="h-5 w-5" />
                             <span>{post.commentCount || 0}</span>
-                        </div>
-                    </div>
-                </Card>
-              </Link>
+                          </div>
+                          {appUser?.role === 'admin' && (
+                              <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeletePost(post.id);
+                                  }}
+                                  aria-label="Delete post"
+                              >
+                                  <Trash2 className="h-4 w-4" />
+                              </Button>
+                          )}
+                      </div>
+                  </div>
+              </Card>
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
