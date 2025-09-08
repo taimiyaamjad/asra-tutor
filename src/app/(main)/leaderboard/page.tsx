@@ -147,19 +147,19 @@ export default function LeaderboardPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                        <Avatar>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
                             <AvatarImage src={user.photoURL || undefined} alt={user.firstName}/>
                             <AvatarFallback>{(user.firstName || user.email || 'S').charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <p className="font-medium">{`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email}</p>
+                            <p className="font-medium text-base">{`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email}</p>
                         </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1 font-bold">
-                        <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                    <div className="flex items-center justify-end gap-1 font-bold text-lg">
+                        <Star className="h-5 w-5 text-yellow-400 fill-current" />
                         <span>{scholarScore}</span>
                     </div>
                   </TableCell>
