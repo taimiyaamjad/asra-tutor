@@ -40,6 +40,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Login Successful', description: 'Welcome back!' });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -79,7 +80,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             role: isFirstUser ? 'admin' : 'student'
         });
       }
-      
+      toast({ title: 'Sign-up Successful', description: 'Welcome to Asra!' });
       router.push('/dashboard');
     } catch (error: any) {
       toast({
@@ -118,7 +119,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
             role: isFirstUser ? 'admin' : 'student'
         });
       }
-
+      toast({ title: 'Login Successful', description: `Welcome, ${user.displayName}!` });
       router.push('/dashboard');
     } catch (error: any) {
       toast({

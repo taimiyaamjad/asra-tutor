@@ -36,6 +36,7 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,6 +50,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { AppUser } from '@/lib/types';
 import { PublicFooter } from '@/components/public-footer';
+import { useToast } from '@/hooks/use-toast';
 
 
 const menuItems = [
@@ -119,6 +121,7 @@ export default function MainLayout({
   const router = useRouter();
   const [user, setUser] = React.useState<AppUser | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
@@ -147,6 +150,7 @@ export default function MainLayout({
 
   const handleLogout = async () => {
     await signOut(auth);
+    toast({ title: "Logged out successfully."});
     router.push('/login');
   };
 
@@ -209,7 +213,7 @@ export default function MainLayout({
                 className="group/menu-item flex w-full justify-start gap-2 overflow-hidden rounded-md p-2 text-left text-sm"
               >
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.photoURL || "https://placehold.co/100x100.png"} alt={user.firstName || 'User'} />
+                  <AvatarImage src={user.photoURL || undefined} alt={user.firstName || 'User'} />
                   <AvatarFallback>{(user.firstName || user.email || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start truncate group-data-[collapsible=icon]:hidden">
@@ -231,13 +235,17 @@ export default function MainLayout({
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <SidebarSeparator />
+           <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton onClick={handleLogout} tooltip="Log Out">
+                        <LogOut />
+                        <span>Log Out</span>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
