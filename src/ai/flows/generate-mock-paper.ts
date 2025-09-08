@@ -3,35 +3,11 @@
  * @fileOverview A mock paper generator AI agent.
  *
  * - generateMockPaper - A function that handles the mock paper generation process.
- * - GenerateMockPaperInput - The input type for the generateMockPaper function.
- * - GenerateMockPaperOutput - The return type for the generateMockPaper function.
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { GenerateMockPaperInputSchema, GenerateMockPaperOutputSchema, type GenerateMockPaperInput, type GenerateMockPaperOutput } from '@/lib/types';
 
-export const GenerateMockPaperInputSchema = z.object({
-  examType: z.string().describe('The type of exam paper to generate (e.g., "NEET", "Jee Mains").'),
-  difficulty: z.string().describe("The difficulty of the paper. Can be 'easy', 'medium', or 'hard'."),
-});
-export type GenerateMockPaperInput = z.infer<typeof GenerateMockPaperInputSchema>;
-
-const MockPaperQuestionSchema = z.object({
-  question: z.string().describe('The text of the question.'),
-  options: z.array(z.string()).describe('An array of 4 possible answers.'),
-  answer: z.string().describe('The correct answer from the options.'),
-});
-
-const PaperSectionSchema = z.object({
-    sectionName: z.string().describe('The name of the section (e.g., "Physics Section A", "Chemistry").'),
-    questions: z.array(MockPaperQuestionSchema).describe('An array of questions for this section.')
-})
-
-export const GenerateMockPaperOutputSchema = z.object({
-  title: z.string().describe('The title of the mock paper.'),
-  sections: z.array(PaperSectionSchema).describe('An array of sections in the paper.'),
-});
-export type GenerateMockPaperOutput = z.infer<typeof GenerateMockPaperOutputSchema>;
 
 export async function generateMockPaper(input: GenerateMockPaperInput): Promise<GenerateMockPaperOutput> {
   return generateMockPaperFlow(input);
