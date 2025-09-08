@@ -62,6 +62,7 @@ export default function BrainstormPage() {
   const handleCreatePost = async () => {
     if (!user || !appUser) {
         toast({ title: "You must be logged in to create a post.", variant: 'destructive'});
+        setIsDialogOpen(false);
         return;
     }
     if (!newPostTitle.trim() || !newPostContent.trim()) {
@@ -145,7 +146,7 @@ export default function BrainstormPage() {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={handleCreatePost} disabled={isSubmitting || !user}>
+                    <Button onClick={handleCreatePost} disabled={isSubmitting}>
                         {isSubmitting ? 'Submitting...' : 'Submit Post'}
                     </Button>
                 </DialogFooter>
@@ -170,31 +171,31 @@ export default function BrainstormPage() {
               const canDelete = user && (appUser?.role === 'admin' || user.uid === post.authorId);
               return (
               <Card key={post.id} className="hover:bg-muted/50 transition-colors">
-                  <div className="flex items-start gap-3 p-3">
-                      <Avatar className="h-9 w-9 border flex-shrink-0">
+                  <div className="flex items-center gap-2 p-2">
+                      <Avatar className="h-8 w-8 border flex-shrink-0">
                         <AvatarImage src={post.authorPhotoURL || undefined} alt={post.authorName}/>
                         <AvatarFallback>{post.authorName.charAt(0).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <Link href={`/brainstorm/${post.id}`} className="block">
-                            <h3 className="font-semibold text-base hover:underline truncate">{post.title}</h3>
+                        <Link href={`/brainstorm/${post.id}`} className="block group">
+                            <h3 className="font-semibold text-sm group-hover:underline truncate">{post.title}</h3>
+                            <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-1.5 mt-0.5">
+                                <p className="truncate">by {post.authorName}</p>
+                                <span className="hidden sm:inline">•</span>
+                                <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
+                            </div>
                         </Link>
-                        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 mt-1">
-                            <p className="truncate">by {post.authorName}</p>
-                            <span className="hidden sm:inline">•</span>
-                            <p>{post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}</p>
-                        </div>
                       </div>
-                      <div className="flex flex-shrink-0 items-center gap-2 text-muted-foreground ml-auto pl-2">
+                      <div className="flex flex-shrink-0 items-center gap-2 text-muted-foreground ml-auto pl-1">
                           <div className="flex items-center gap-1">
-                            <MessageSquare className="h-4 w-4" />
-                            <span className="text-sm">{post.commentCount || 0}</span>
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            <span className="text-xs">{post.commentCount || 0}</span>
                           </div>
                           {canDelete && (
                               <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 w-7"
+                                  className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 w-6"
                                   onClick={(e) => {
                                       e.preventDefault();
                                       e.stopPropagation();
@@ -202,7 +203,7 @@ export default function BrainstormPage() {
                                   }}
                                   aria-label="Delete post"
                               >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-3.5 w-3.5" />
                               </Button>
                           )}
                       </div>
