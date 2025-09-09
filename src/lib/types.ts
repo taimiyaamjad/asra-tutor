@@ -121,3 +121,23 @@ export interface Comment {
     authorPhotoURL?: string;
     createdAt: Timestamp;
 }
+
+// JEE Rank Predictor Types
+export const PredictJeeRankInputSchema = z.object({
+  examType: z.enum(['Jee Main', 'Jee Advanced']),
+  marks: z.number().int().describe('The student\'s score in the mock test.'),
+});
+export type PredictJeeRankInput = z.infer<typeof PredictJeeRankInputSchema>;
+
+const CollegeSuggestionSchema = z.object({
+  collegeName: z.string().describe('The name of the suggested college.'),
+  collegeType: z.enum(['IIT', 'NIT', 'IIIT', 'GFTI']).describe('The type of college.'),
+  branchSuggestion: z.string().describe('A suitable engineering branch for the predicted rank.'),
+});
+
+export const JeePredictionSchema = z.object({
+    predictedPercentile: z.number().describe("The predicted percentile based on the student's marks."),
+    predictedRank: z.string().describe('The predicted All India Rank range (e.g., "5000 - 6000").'),
+    collegeSuggestions: z.array(CollegeSuggestionSchema).describe('A list of suggested colleges.'),
+});
+export type JeePrediction = z.infer<typeof JeePredictionSchema>;

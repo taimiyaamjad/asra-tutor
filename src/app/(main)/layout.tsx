@@ -23,6 +23,7 @@ import {
   Lightbulb,
   BarChart,
   Notebook,
+  Award,
 } from 'lucide-react';
 
 import {
@@ -83,6 +84,11 @@ const menuItems = [
     href: '/accession',
     icon: ClipboardPen,
     label: 'Accession',
+  },
+  {
+    href: '/rank-predictor',
+    icon: Award,
+    label: 'Rank Predictor',
   },
   {
     href: '/articles',
