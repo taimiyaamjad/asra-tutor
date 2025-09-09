@@ -18,19 +18,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { predictJeeRank } from '@/ai/flows/predict-jee-rank';
-import type { JeePrediction } from '@/lib/types';
+import { predictRank } from '@/ai/flows/predict-rank';
+import type { Prediction } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Award, Building, TrendingUp, BookCheck } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
+const examDetails = {
+    'Jee Main': { maxMarks: 300 },
+    'Jee Advanced': { maxMarks: 360 },
+    'NEET': { maxMarks: 720 },
+};
+
 export default function RankPredictorPage() {
-  const [examType, setExamType] = useState<'Jee Main' | 'Jee Advanced'>('Jee Main');
+  const [examType, setExamType] = useState<'Jee Main' | 'Jee Advanced' | 'NEET'>('Jee Main');
   const [marks, setMarks] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [prediction, setPrediction] = useState<JeePrediction | null>(null);
+  const [prediction, setPrediction] = useState<Prediction | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,8 +51,7 @@ export default function RankPredictorPage() {
       return;
     }
     
-    // Validate marks based on exam type
-    const maxMarks = examType === 'Jee Main' ? 300 : 360;
+    const maxMarks = examDetails[examType].maxMarks;
     if (parsedMarks < 0 || parsedMarks > maxMarks) {
         toast({
             title: 'Invalid Marks',
@@ -60,7 +65,7 @@ export default function RankPredictorPage() {
     setIsLoading(true);
     setPrediction(null);
     try {
-      const response = await predictJeeRank({ examType, marks: parsedMarks });
+      const response = await predictRank({ examType, marks: parsedMarks });
       setPrediction(response);
     } catch (error) {
       console.error('Failed to predict rank:', error);
@@ -97,7 +102,7 @@ export default function RankPredictorPage() {
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Your AI-Powered JEE Prediction</CardTitle>
+            <CardTitle>Your AI-Powered {examType} Prediction</CardTitle>
             <CardDescription>Based on your score of {marks} in {examType}.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -105,10 +110,10 @@ export default function RankPredictorPage() {
                 <Card className="p-4">
                     <CardHeader className="p-0 pb-2 flex-row items-center gap-2">
                          <TrendingUp className="h-5 w-5 text-primary" />
-                         <CardTitle className="text-lg">Predicted Percentile</CardTitle>
+                         <CardTitle className="text-lg">Predicted Percentile / Score</CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <p className="text-3xl font-bold">{prediction.predictedPercentile}%</p>
+                        <p className="text-3xl font-bold">{prediction.predictedPercentileOrScore}</p>
                     </CardContent>
                 </Card>
                 <Card className="p-4">
@@ -155,9 +160,9 @@ export default function RankPredictorPage() {
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Award /> JEE Rank Predictor</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Award /> Rank & College Predictor</CardTitle>
           <CardDescription>
-            Enter your mock test score to get an AI-powered prediction of your rank and potential colleges.
+            Enter your mock test score to get an AI-powered prediction of your rank and potential colleges for JEE or NEET.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -166,7 +171,11 @@ export default function RankPredictorPage() {
               <Label htmlFor="exam-type">Exam Type</Label>
               <Select
                 value={examType}
-                onValueChange={(value) => setExamType(value as 'Jee Main' | 'Jee Advanced')}
+                onValueChange={(value) => {
+                    setExamType(value as 'Jee Main' | 'Jee Advanced' | 'NEET');
+                    setMarks('');
+                    setPrediction(null);
+                }}
                 disabled={isLoading}
               >
                 <SelectTrigger id="exam-type">
@@ -175,6 +184,7 @@ export default function RankPredictorPage() {
                 <SelectContent>
                   <SelectItem value="Jee Main">JEE Main</SelectItem>
                   <SelectItem value="Jee Advanced">JEE Advanced</SelectItem>
+                  <SelectItem value="NEET">NEET</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -183,7 +193,7 @@ export default function RankPredictorPage() {
               <Input
                 id="marks"
                 type="number"
-                placeholder={`Enter marks out of ${examType === 'Jee Main' ? 300 : 360}`}
+                placeholder={`Enter marks out of ${examDetails[examType].maxMarks}`}
                 value={marks}
                 onChange={(e) => setMarks(e.target.value)}
                 disabled={isLoading}

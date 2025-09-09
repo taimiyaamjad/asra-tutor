@@ -122,22 +122,22 @@ export interface Comment {
     createdAt: Timestamp;
 }
 
-// JEE Rank Predictor Types
-export const PredictJeeRankInputSchema = z.object({
-  examType: z.enum(['Jee Main', 'Jee Advanced']),
+// Rank Predictor Types
+export const PredictRankInputSchema = z.object({
+  examType: z.enum(['Jee Main', 'Jee Advanced', 'NEET']),
   marks: z.number().int().describe('The student\'s score in the mock test.'),
 });
-export type PredictJeeRankInput = z.infer<typeof PredictJeeRankInputSchema>;
+export type PredictRankInput = z.infer<typeof PredictRankInputSchema>;
 
 const CollegeSuggestionSchema = z.object({
   collegeName: z.string().describe('The name of the suggested college.'),
-  collegeType: z.enum(['IIT', 'NIT', 'IIIT', 'GFTI']).describe('The type of college.'),
-  branchSuggestion: z.string().describe('A suitable engineering branch for the predicted rank.'),
+  collegeType: z.string().describe('The type of college (e.g., IIT, NIT, AIIMS).'),
+  branchSuggestion: z.string().describe('A suitable branch for the predicted rank (e.g., Computer Science, MBBS).'),
 });
 
-export const JeePredictionSchema = z.object({
-    predictedPercentile: z.number().describe("The predicted percentile based on the student's marks."),
+export const PredictionSchema = z.object({
+    predictedPercentileOrScore: z.string().describe("The predicted percentile (for JEE) or score range (for NEET) based on the student's marks."),
     predictedRank: z.string().describe('The predicted All India Rank range (e.g., "5000 - 6000").'),
     collegeSuggestions: z.array(CollegeSuggestionSchema).describe('A list of suggested colleges.'),
 });
-export type JeePrediction = z.infer<typeof JeePredictionSchema>;
+export type Prediction = z.infer<typeof PredictionSchema>;
