@@ -23,7 +23,7 @@ const FlashcardSchema = z.object({
 const GenerateFlashcardsOutputSchema = z.object({
   flashcards: z.array(FlashcardSchema).describe('An array of generated flashcards.'),
 });
-export type GenerateFlashcardsOutput = z-infer<typeof GenerateFlashcardsOutputSchema>;
+export type GenerateFlashcardsOutput = z.infer<typeof GenerateFlashcardsOutputSchema>;
 
 export async function generateFlashcards(input: GenerateFlashcardsInput): Promise<GenerateFlashcardsOutput> {
   return generateFlashcardsFlow(input);
