@@ -1,4 +1,3 @@
-
 'use server';
 
 import { config } from 'dotenv';
@@ -10,3 +9,4 @@ import '@/ai/flows/generate-article.ts';
 import '@/ai/flows/generate-mock-paper.ts';
 import '@/ai/flows/generate-notes.ts';
 import '@/ai/flows/predict-rank.ts';
+import '@/ai/flows/generate-flashcards.ts';

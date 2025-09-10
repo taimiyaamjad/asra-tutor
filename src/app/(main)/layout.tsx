@@ -24,6 +24,7 @@ import {
   BarChart,
   Notebook,
   Award,
+  Layers,
 } from 'lucide-react';
 
 import {
@@ -99,6 +100,11 @@ const menuItems = [
     href: '/notes',
     icon: Notebook,
     label: 'Notes',
+  },
+  {
+    href: '/flashcards',
+    icon: Layers,
+    label: 'Flashcards',
   },
   {
     href: '/question-realm',
