@@ -29,6 +29,9 @@ import { ClipboardPen, CheckCircle, XCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { auth, db } from '@/lib/firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 
 const examCategories = [
@@ -110,6 +113,7 @@ export default function AccessionPage() {
   const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
   const [result, setResult] = useState<PaperResult | null>(null);
   const { toast } = useToast();
+  const [user] = useAuthState(auth);
 
   const handleGeneratePaper = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,8 +162,8 @@ export default function AccessionPage() {
     }));
   };
 
-  const handleSubmitPaper = () => {
-    if (!mockPaper) return;
+  const handleSubmitPaper = async () => {
+    if (!mockPaper || !user) return;
 
     let correctCount = 0;
     let attemptedCount = 0;
@@ -184,14 +188,35 @@ export default function AccessionPage() {
             }
         });
     });
-
-    setResult({
-        score: totalQuestions > 0 && attemptedCount > 0 ? (correctCount / attemptedCount) * 100 : 0,
+    
+    const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+    
+    const resultData = {
+        score: score,
         correctAnswers: correctCount,
         totalQuestions,
         attemptedQuestions: attemptedCount,
         results: detailedResults,
-    });
+    };
+    
+    setResult(resultData);
+
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'mockPaperAttempts'), {
+        examType: mockPaper.title,
+        score,
+        correctAnswers: correctCount,
+        totalQuestions,
+        createdAt: serverTimestamp(),
+      });
+    } catch (error) {
+       console.error("Error saving mock paper result: ", error);
+       toast({
+        title: 'Submission Failed',
+        description: 'Could not save your mock paper results. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const renderPaperContent = () => {
@@ -392,3 +417,5 @@ export default function AccessionPage() {
     </div>
   );
 }
+
+    

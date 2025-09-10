@@ -48,6 +48,16 @@ const calculateScholarScore = async (userId: string): Promise<number> => {
     score += Math.round(totalScore / numQuizzes);
   }
 
+  // Mock Papers (Accession): +15 per paper, + avg score
+  const mockPaperQuery = query(collection(db, 'users', userId, 'mockPaperAttempts'));
+  const mockPaperSnaps = await getDocs(mockPaperQuery);
+  const numMockPapers = mockPaperSnaps.size;
+  if (numMockPapers > 0) {
+      score += numMockPapers * 15;
+      const totalScore = mockPaperSnaps.docs.reduce((acc, doc) => acc + (doc.data().score || 0), 0);
+      score += Math.round(totalScore / numMockPapers);
+  }
+
   // Questions Asked: +5 per post
   const postsQuery = query(collection(db, 'posts'), where('authorId', '==', userId));
   const postsSnaps = await getDocs(postsQuery);
@@ -91,7 +101,8 @@ export default function LeaderboardPage() {
           .map((entry, index) => ({
             ...entry,
             rank: index + 1,
-          }));
+          }))
+          .slice(0, 10); // Get top 10
 
         setLeaderboard(sortedLeaderboard);
       } catch (error) {
@@ -175,3 +186,5 @@ export default function LeaderboardPage() {
     </Card>
   );
 }
+
+    
