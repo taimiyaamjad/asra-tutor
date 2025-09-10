@@ -17,8 +17,15 @@ const AiTutorChatInputSchema = z.object({
 });
 export type AiTutorChatInput = z.infer<typeof AiTutorChatInputSchema>;
 
+const CrossSubjectLinkSchema = z.object({
+    subject: z.string().describe('The related academic subject (e.g., "Mathematics", "Chemistry").'),
+    concept: z.string().describe('The specific concept in the related subject (e.g., "Vectors", "Chemical Bonds").'),
+    explanation: z.string().describe('A brief explanation of how the primary topic and the related concept are linked.'),
+});
+
 const AiTutorChatOutputSchema = z.object({
-  answer: z.string().describe('The detailed, context-aware answer from the AI Tutor.'),
+  answer: z.string().describe('The detailed, context-aware answer to the student\'s question.'),
+  crossSubjectLinks: z.array(CrossSubjectLinkSchema).optional().describe('A list of connections to other academic subjects, if any are found.'),
 });
 export type AiTutorChatOutput = z.infer<typeof AiTutorChatOutputSchema>;
 
@@ -30,13 +37,19 @@ const prompt = ai.definePrompt({
   name: 'aiTutorChatPrompt',
   input: {schema: AiTutorChatInputSchema},
   output: {schema: AiTutorChatOutputSchema},
-  prompt: `You are an AI Tutor, specialized in providing detailed, context-aware answers to students.
+  prompt: `You are an expert AI Tutor. Your goal is to provide a clear and detailed answer to the student's question.
 
-  Context: {{{context}}}
+In addition to answering the question, you MUST analyze the topic and identify if it has strong connections to other academic subjects (like Physics, Math, Chemistry, History, etc.).
 
-  Question: {{{question}}}
+If you find any relevant connections, populate the 'crossSubjectLinks' array. For each link, specify the subject, the related concept, and a concise explanation of the link. If no strong connections are found, leave the array empty.
 
-  Answer:`,
+  Conversation Context:
+  {{{context}}}
+
+  Student's Question:
+  "{{{question}}}"
+
+  Your Answer:`,
 });
 
 const aiTutorChatFlow = ai.defineFlow(

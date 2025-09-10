@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, Send, User } from 'lucide-react';
-import type { ChatMessage } from '@/lib/types';
+import { BrainCircuit, Send, User, Link2 } from 'lucide-react';
+import type { ChatMessage, AiTutorChatOutput } from '@/lib/types';
 import { aiTutorChat } from '@/ai/flows/ai-tutor-chat';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
@@ -59,7 +59,7 @@ export default function ChatPage() {
       });
 
       const chatHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
-      const response = await aiTutorChat({
+      const response: AiTutorChatOutput = await aiTutorChat({
         question: input,
         context: chatHistory,
       });
@@ -68,6 +68,7 @@ export default function ChatPage() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.answer,
+        crossSubjectLinks: response.crossSubjectLinks
       };
 
       // Save assistant message to Firestore
@@ -117,23 +118,42 @@ export default function ChatPage() {
                     </AvatarFallback>
                   </Avatar>
                 )}
-                <div
-                  className={cn(
-                    'max-w-md rounded-lg p-3 text-sm',
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  )}
-                >
-                  {message.isTyping ? (
-                    <div className="flex items-center gap-1">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-0"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-150"></span>
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-300"></span>
+                <div className="flex flex-col gap-2 max-w-md">
+                    <div
+                    className={cn(
+                        'rounded-lg p-3 text-sm',
+                        message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted'
+                    )}
+                    >
+                    {message.isTyping ? (
+                        <div className="flex items-center gap-1">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-0"></span>
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-150"></span>
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-muted-foreground delay-300"></span>
+                        </div>
+                    ) : (
+                        <p className="whitespace-pre-wrap">{message.content}</p>
+                    )}
                     </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                  )}
+                    {message.crossSubjectLinks && message.crossSubjectLinks.length > 0 && (
+                        <Card>
+                            <CardHeader className="p-3">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <Link2 className="h-4 w-4" />
+                                    Cross-Subject Links
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-3 pt-0 text-sm space-y-2">
+                                {message.crossSubjectLinks.map((link, index) => (
+                                    <div key={index} className="border-l-2 border-primary pl-3">
+                                        <p><strong>{link.subject} - {link.concept}:</strong> {link.explanation}</p>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-8 w-8 border">
