@@ -8,11 +8,6 @@ export interface ChatMessage {
   content: string;
   isTyping?: boolean;
   createdAt?: Timestamp;
-  crossSubjectLinks?: {
-    subject: string;
-    concept: string;
-    explanation: string;
-  }[];
 }
 
 export interface QuizQuestion {
@@ -148,14 +143,7 @@ export const PredictionSchema = z.object({
 export type Prediction = z.infer<typeof PredictionSchema>;
 
 // AI Tutor Chat Types
-const CrossSubjectLinkSchema = z.object({
-    subject: z.string().describe('The related academic subject (e.g., "Mathematics", "Chemistry").'),
-    concept: z.string().describe('The specific concept in the related subject (e.g., "Vectors", "Chemical Bonds").'),
-    explanation: z.string().describe('A brief explanation of how the primary topic and the related concept are linked.'),
-});
-
 export const AiTutorChatOutputSchema = z.object({
   answer: z.string().describe('The detailed, context-aware answer to the student\'s question.'),
-  crossSubjectLinks: z.array(CrossSubjectLinkSchema).optional().describe('A list of connections to other academic subjects, if any are found.'),
 });
 export type AiTutorChatOutput = z.infer<typeof AiTutorChatOutputSchema>;

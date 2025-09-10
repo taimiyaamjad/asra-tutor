@@ -68,7 +68,6 @@ export default function ChatPage() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.answer,
-        crossSubjectLinks: response.crossSubjectLinks
       };
 
       // Save assistant message to Firestore
@@ -137,23 +136,6 @@ export default function ChatPage() {
                         <p className="whitespace-pre-wrap">{message.content}</p>
                     )}
                     </div>
-                    {message.crossSubjectLinks && message.crossSubjectLinks.length > 0 && (
-                        <Card>
-                            <CardHeader className="p-3">
-                                <CardTitle className="text-sm flex items-center gap-2">
-                                    <Link2 className="h-4 w-4" />
-                                    Cross-Subject Links
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-3 pt-0 text-sm space-y-2">
-                                {message.crossSubjectLinks.map((link, index) => (
-                                    <div key={index} className="border-l-2 border-primary pl-3">
-                                        <p><strong>{link.subject} - {link.concept}:</strong> {link.explanation}</p>
-                                    </div>
-                                ))}
-                            </CardContent>
-                        </Card>
-                    )}
                 </div>
                 {message.role === 'user' && (
                   <Avatar className="h-8 w-8 border">

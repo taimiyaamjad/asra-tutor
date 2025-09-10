@@ -25,6 +25,7 @@ import {
   Notebook,
   Award,
   Layers,
+  GitBranch,
 } from 'lucide-react';
 
 import {
@@ -110,6 +111,11 @@ const menuItems = [
     href: '/question-realm',
     icon: Lightbulb,
     label: 'Question Realm',
+  },
+  {
+    href: '/connections',
+    icon: GitBranch,
+    label: 'Connections',
   },
   {
     href: '/leaderboard',
