@@ -54,24 +54,38 @@ function FlashcardComponent({ flashcard }: { flashcard: Flashcard }) {
 
 export default function FlashcardsPage() {
   const [notes, setNotes] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerated, setIsGenerated] = useState<boolean>(false);
   const { toast } = useToast();
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setImageFile(file);
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      if (files.length > 3) {
+        toast({
+          title: "Too many files",
+          description: "You can upload a maximum of 3 images.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFiles(files);
       setNotes(''); // Clear text notes if image is selected
       
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const newPreviews: string[] = [];
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newPreviews.push(reader.result as string);
+          if (newPreviews.length === files.length) {
+            setImagePreviews(newPreviews);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
@@ -86,7 +100,7 @@ export default function FlashcardsPage() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notes.trim() && !imageFile) {
+    if (!notes.trim() && imageFiles.length === 0) {
       toast({
         title: 'Input required',
         description: 'Please enter some notes or upload an image to generate flashcards.',
@@ -98,14 +112,14 @@ export default function FlashcardsPage() {
     setFlashcards([]);
     setIsGenerated(false);
     try {
-        let photoDataUri: string | undefined = undefined;
-        if (imageFile) {
-            photoDataUri = await fileToBase64(imageFile);
+        let photoDataUris: string[] | undefined = undefined;
+        if (imageFiles.length > 0) {
+            photoDataUris = await Promise.all(imageFiles.map(file => fileToBase64(file)));
         }
 
       const response = await generateFlashcards({
         notes: notes || undefined,
-        photoDataUri,
+        photoDataUris,
       });
       setFlashcards(response.flashcards);
       setIsGenerated(true);
@@ -163,7 +177,7 @@ export default function FlashcardsPage() {
             <Layers /> Flashcards Generator
           </CardTitle>
           <CardDescription>
-            Paste your notes or upload an image and the AI will automatically convert them into flashcards.
+            Paste your notes or upload up to 3 images and the AI will automatically convert them into flashcards.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleGenerate}>
@@ -178,8 +192,8 @@ export default function FlashcardsPage() {
                 value={notes}
                 onChange={(e) => {
                   setNotes(e.target.value);
-                  setImageFile(null);
-                  setImagePreview(null);
+                  setImageFiles([]);
+                  setImagePreviews([]);
                 }}
                 disabled={isLoading}
                 rows={8}
@@ -187,18 +201,20 @@ export default function FlashcardsPage() {
             </div>
              <div className="grid w-full gap-2">
               <Label htmlFor="image-upload" className="flex items-center gap-2">
-                <UploadCloud className="h-4 w-4" /> Option 2: Upload Image
+                <UploadCloud className="h-4 w-4" /> Option 2: Upload Images (max 3)
               </Label>
-              <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} />
-              {imagePreview && (
-                <div className="mt-2 border rounded-md p-2">
-                    <img src={imagePreview} alt="Notes preview" className="w-full h-auto max-h-32 object-contain rounded-md"/>
+              <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} multiple />
+              {imagePreviews.length > 0 && (
+                <div className="mt-2 grid grid-cols-3 gap-2 border rounded-md p-2">
+                    {imagePreviews.map((preview, index) => (
+                         <img key={index} src={preview} alt={`Notes preview ${index+1}`} className="w-full h-auto max-h-24 object-contain rounded-md"/>
+                    ))}
                 </div>
               )}
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isLoading || (!notes && !imageFile)}>
+            <Button type="submit" disabled={isLoading || (!notes && imageFiles.length === 0)}>
               {isLoading && (
                 <svg
                   className="mr-2 h-4 w-4 animate-spin"
