@@ -153,7 +153,7 @@ export default function BrainstormPage() {
             </DialogContent>
            </Dialog>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2">
           {isLoading ? (
              Array.from({ length: 3 }).map((_, i) => (
                 <Card key={i} className="p-4">

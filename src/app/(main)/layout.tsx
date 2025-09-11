@@ -26,6 +26,7 @@ import {
   Award,
   Layers,
   GitBranch,
+  BookText,
 } from 'lucide-react';
 
 import {
@@ -108,14 +109,19 @@ const menuItems = [
     label: 'Flashcards',
   },
   {
-    href: '/question-realm',
+    href: '/brainstorm',
     icon: Lightbulb,
-    label: 'Question Realm',
+    label: 'Brainstorm',
   },
   {
     href: '/connections',
     icon: GitBranch,
     label: 'Connections',
+  },
+   {
+    href: '/resources',
+    icon: BookText,
+    label: 'Resources',
   },
   {
     href: '/leaderboard',
@@ -125,7 +131,7 @@ const menuItems = [
   {
     href: '/admin',
     icon: Shield,
-    label: 'Admin Panel',
+    label: 'Manage Resources',
     roles: ['admin'],
   },
 ];

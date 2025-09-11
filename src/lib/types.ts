@@ -1,6 +1,6 @@
 
 import { z } from 'zod';
-import type { Timestamp } from 'firebase/firestore';
+import type { Timestamp, FieldValue } from 'firebase/firestore';
 
 export interface ChatMessage {
   id: string;
@@ -67,7 +67,7 @@ export interface Game {
   round: 1 | 2;
   questions: QuizQuestion[];
   currentQuestionIndex: number;
-  createdAt: Timestamp | ReturnType<typeof serverTimestamp>;
+  createdAt: Timestamp | FieldValue;
   timestamps: {
       [key in GameState]?: Timestamp;
   }
@@ -101,7 +101,7 @@ export type GenerateMockPaperOutput = z.infer<typeof GenerateMockPaperOutputSche
 export type MockPaper = z.infer<typeof GenerateMockPaperOutputSchema>;
 
 
-// Brainstorm Types
+// Brainstorm / Question Realm Types
 export interface Post {
     id: string;
     title: string;
@@ -147,3 +147,12 @@ export const AiTutorChatOutputSchema = z.object({
   answer: z.string().describe('The detailed, context-aware answer to the student\'s question.'),
 });
 export type AiTutorChatOutput = z.infer<typeof AiTutorChatOutputSchema>;
+
+
+// Resources Type
+export interface Resource {
+    id: string;
+    name: string;
+    link: string;
+    createdAt: Timestamp;
+}
