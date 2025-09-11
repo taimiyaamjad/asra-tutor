@@ -138,6 +138,7 @@ const CollegeSuggestionSchema = z.object({
 export const PredictionSchema = z.object({
     predictedPercentileOrScore: z.string().describe("The predicted percentile (for JEE) or score range (for NEET) based on the student's marks."),
     predictedRank: z.string().describe('The predicted All India Rank range (e.g., "5000 - 6000").'),
+    predictionRationale: z.string().describe('A brief explanation for the prediction, citing trends or data.'),
     collegeSuggestions: z.array(CollegeSuggestionSchema).describe('A list of suggested colleges.'),
 });
 export type Prediction = z.infer<typeof PredictionSchema>;

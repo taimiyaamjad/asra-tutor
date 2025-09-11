@@ -23,7 +23,7 @@ import type { Prediction } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Award, Building, TrendingUp, BookCheck } from 'lucide-react';
+import { Award, Building, TrendingUp, BookCheck, Info } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const examDetails = {
@@ -127,6 +127,16 @@ export default function RankPredictorPage() {
                 </Card>
             </div>
             
+             <Card className="p-4 bg-muted/50">
+                <CardHeader className="p-0 pb-2 flex-row items-center gap-2">
+                    <Info className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle className="text-base">Prediction Rationale</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <p className="text-sm text-muted-foreground">{prediction.predictionRationale}</p>
+                </CardContent>
+            </Card>
+
             <div>
                 <h3 className="text-xl font-semibold flex items-center gap-2 mb-3"><BookCheck /> College Suggestions</h3>
                 <div className="space-y-3">
