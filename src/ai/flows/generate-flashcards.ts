@@ -11,7 +11,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GenerateFlashcardsInputSchema = z.object({
-  notes: z.string().describe('The notes to be converted into flashcards.'),
+  notes: z.string().optional().describe('The notes to be converted into flashcards.'),
+  photoDataUri: z.string().optional().describe(
+      "A photo of notes, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+    ),
 });
 export type GenerateFlashcardsInput = z.infer<typeof GenerateFlashcardsInputSchema>;
 
@@ -37,8 +40,16 @@ const prompt = ai.definePrompt({
 
 Focus on the most important information and create flashcards that are easy to understand and suitable for revision.
 
+{{#if photoDataUri}}
+First, extract the text from this image of notes. Then, create the flashcards from the extracted text.
+Photo of Notes:
+{{media url=photoDataUri}}
+{{/if}}
+
+{{#if notes}}
 Notes:
 {{{notes}}}
+{{/if}}
 
 Your output MUST be a valid JSON object that adheres to the provided schema. Do not include any other text, formatting, or code fences.
 `,
@@ -51,6 +62,9 @@ const generateFlashcardsFlow = ai.defineFlow(
     outputSchema: GenerateFlashcardsOutputSchema,
   },
   async input => {
+    if (!input.notes && !input.photoDataUri) {
+      throw new Error('Either notes or a photo must be provided.');
+    }
     const {output} = await prompt(input);
     if (!output || !Array.isArray(output.flashcards) || output.flashcards.length === 0) {
       throw new Error('Received invalid or empty flashcard data from AI.');

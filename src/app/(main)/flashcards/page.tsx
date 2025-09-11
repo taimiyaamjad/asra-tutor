@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { generateFlashcards, type GenerateFlashcardsOutput } from '@/ai/flows/generate-flashcards';
-import { Layers } from 'lucide-react';
+import { Layers, UploadCloud, FileText } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import {
@@ -25,6 +25,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
 
 type Flashcard = GenerateFlashcardsOutput['flashcards'][0];
 
@@ -53,17 +54,42 @@ function FlashcardComponent({ flashcard }: { flashcard: Flashcard }) {
 
 export default function FlashcardsPage() {
   const [notes, setNotes] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isGenerated, setIsGenerated] = useState<boolean>(false);
   const { toast } = useToast();
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      setNotes(''); // Clear text notes if image is selected
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notes.trim()) {
+    if (!notes.trim() && !imageFile) {
       toast({
-        title: 'Notes required',
-        description: 'Please enter some notes to generate flashcards.',
+        title: 'Input required',
+        description: 'Please enter some notes or upload an image to generate flashcards.',
         variant: 'destructive',
       });
       return;
@@ -72,14 +98,22 @@ export default function FlashcardsPage() {
     setFlashcards([]);
     setIsGenerated(false);
     try {
-      const response = await generateFlashcards({ notes });
+        let photoDataUri: string | undefined = undefined;
+        if (imageFile) {
+            photoDataUri = await fileToBase64(imageFile);
+        }
+
+      const response = await generateFlashcards({
+        notes: notes || undefined,
+        photoDataUri,
+      });
       setFlashcards(response.flashcards);
       setIsGenerated(true);
     } catch (error) {
       console.error('Failed to generate flashcards:', error);
       toast({
         title: 'Generation Failed',
-        description: 'Could not generate flashcards. Please try again.',
+        description: 'Could not generate flashcards. Please try again or use a clearer image.',
         variant: 'destructive',
       });
     } finally {
@@ -129,25 +163,42 @@ export default function FlashcardsPage() {
             <Layers /> Flashcards Generator
           </CardTitle>
           <CardDescription>
-            Paste your notes and the AI will automatically convert them into flashcards for effective revision.
+            Paste your notes or upload an image and the AI will automatically convert them into flashcards.
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleGenerate}>
-          <CardContent>
-            <div className="grid w-full gap-2">
-              <Label htmlFor="notes">Your Notes</Label>
+          <CardContent className="grid gap-6 md:grid-cols-2">
+             <div className="grid w-full gap-2">
+              <Label htmlFor="notes" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" /> Option 1: Paste Notes
+              </Label>
               <Textarea
                 id="notes"
                 placeholder="Paste your notes here..."
                 value={notes}
-                onChange={(e) => setNotes(e.target.value)}
+                onChange={(e) => {
+                  setNotes(e.target.value);
+                  setImageFile(null);
+                  setImagePreview(null);
+                }}
                 disabled={isLoading}
                 rows={8}
               />
             </div>
+             <div className="grid w-full gap-2">
+              <Label htmlFor="image-upload" className="flex items-center gap-2">
+                <UploadCloud className="h-4 w-4" /> Option 2: Upload Image
+              </Label>
+              <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"/>
+              {imagePreview && (
+                <div className="mt-2 border rounded-md p-2">
+                    <img src={imagePreview} alt="Notes preview" className="w-full h-auto max-h-32 object-contain rounded-md"/>
+                </div>
+              )}
+            </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isLoading || !notes}>
+            <Button type="submit" disabled={isLoading || (!notes && !imageFile)}>
               {isLoading && (
                 <svg
                   className="mr-2 h-4 w-4 animate-spin"
