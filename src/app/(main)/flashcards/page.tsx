@@ -189,7 +189,7 @@ export default function FlashcardsPage() {
               <Label htmlFor="image-upload" className="flex items-center gap-2">
                 <UploadCloud className="h-4 w-4" /> Option 2: Upload Image
               </Label>
-              <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"/>
+              <Input id="image-upload" type="file" accept="image/*" onChange={handleImageChange} disabled={isLoading} />
               {imagePreview && (
                 <div className="mt-2 border rounded-md p-2">
                     <img src={imagePreview} alt="Notes preview" className="w-full h-auto max-h-32 object-contain rounded-md"/>
