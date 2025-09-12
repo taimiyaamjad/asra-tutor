@@ -13,7 +13,7 @@ import type { ChatMessage, AiTutorChatOutput } from '@/lib/types';
 import { aiTutorChat } from '@/ai/flows/ai-tutor-chat';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -27,6 +27,23 @@ export default function ChatPage() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [user] = useAuthState(auth);
+
+  useEffect(() => {
+    if (user) {
+        setIsLoading(true);
+        const q = query(collection(db, 'users', user.uid, 'chatHistory'), orderBy('createdAt', 'asc'));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const history: ChatMessage[] = [];
+            querySnapshot.forEach((doc) => {
+                history.push({ id: doc.id, ...doc.data() } as ChatMessage);
+            });
+            setMessages(history);
+            setIsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }
+  }, [user]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -51,21 +68,24 @@ export default function ChatPage() {
       content: input,
     };
     
-    setMessages((prev) => [...prev, userMessage, {id: 'typing', role: 'assistant', content: '', isTyping: true}]);
+    // Optimistically update UI
+    const tempMessages = [...messages, userMessage, {id: 'typing', role: 'assistant', content: '', isTyping: true}];
+    setMessages(tempMessages);
+    const tempInput = input;
     setInput('');
     setIsLoading(true);
 
     try {
       // Save user message to Firestore
       await addDoc(collection(db, 'users', user.uid, 'chatHistory'), {
-        ...userMessage,
         role: userMessage.role,
+        content: userMessage.content,
         createdAt: serverTimestamp(),
       });
 
       const chatHistory = messages.map(m => `${m.role}: ${m.content}`).join('\n');
       const response: AiTutorChatOutput = await aiTutorChat({
-        question: input,
+        question: tempInput,
         context: chatHistory,
         personality: personality,
       });
@@ -78,14 +98,16 @@ export default function ChatPage() {
 
       // Save assistant message to Firestore
        await addDoc(collection(db, 'users', user.uid, 'chatHistory'), {
-        ...assistantMessage,
+        role: assistantMessage.role,
+        content: assistantMessage.content,
         createdAt: serverTimestamp(),
       });
 
-      setMessages((prev) => [...prev.slice(0, -1), assistantMessage]);
+      // The onSnapshot listener will update the messages state with the final data
     } catch (error) {
       console.error('Error with AI tutor chat:', error);
-      setMessages((prev) => prev.slice(0, -1));
+      // Revert optimistic update on error
+      setMessages(messages); 
       toast({
         title: 'Error',
         description: 'Failed to get a response from the AI tutor. Please try again.',
@@ -169,6 +191,11 @@ export default function ChatPage() {
                 )}
               </div>
             ))}
+             {messages.length === 0 && !isLoading && (
+              <div className="text-center text-muted-foreground pt-12">
+                <p>Start a conversation with your AI Tutor.</p>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </CardContent>
