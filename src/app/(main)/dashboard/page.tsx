@@ -150,16 +150,16 @@ export default function DashboardPage() {
       // Listener for chat history
       const chatQuery = query(
         collection(db, 'users', user.uid, 'chatHistory'),
-        where('role', '==', 'user'),
         orderBy('createdAt', 'desc')
       );
       const unsubscribeChat = onSnapshot(chatQuery, (snapshot) => {
-         const chatMessages = snapshot.docs.map(doc => doc.data()) as ChatMessage[];
-         setQuestionHistory(chatMessages);
+         const allMessages = snapshot.docs.map(doc => doc.data()) as ChatMessage[];
+         const userMessages = allMessages.filter(msg => msg.role === 'user');
+         setQuestionHistory(userMessages);
         setStats((prev) =>
           prev.map((stat) =>
             stat.title === 'Questions Asked'
-              ? { ...stat, value: snapshot.size.toString() }
+              ? { ...stat, value: userMessages.length.toString() }
               : stat
           )
         );
@@ -315,3 +315,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
