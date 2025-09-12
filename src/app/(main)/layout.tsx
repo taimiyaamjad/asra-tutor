@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -28,6 +27,7 @@ import {
   GitBranch,
   BookText,
   Camera,
+  WandSparkles,
 } from 'lucide-react';
 
 import {
@@ -68,6 +68,11 @@ const menuItems = [
     href: '/chat',
     icon: MessageSquare,
     label: 'AI Chat',
+  },
+  {
+    href: '/future-self',
+    icon: WandSparkles,
+    label: 'Future Self',
   },
   {
     href: '/group-chat',
