@@ -4,22 +4,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { BrainCircuit, Send, User, Link2 } from 'lucide-react';
+import { BrainCircuit, Send, User } from 'lucide-react';
 import type { ChatMessage, AiTutorChatOutput } from '@/lib/types';
 import { aiTutorChat } from '@/ai/flows/ai-tutor-chat';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+type AIPersonality = 'Tutor' | 'Strict Teacher' | 'Funny Senior' | 'Philosopher' | 'Exam Hacker';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [personality, setPersonality] = useState<AIPersonality>('Tutor');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const [user] = useAuthState(auth);
@@ -55,6 +59,7 @@ export default function ChatPage() {
       // Save user message to Firestore
       await addDoc(collection(db, 'users', user.uid, 'chatHistory'), {
         ...userMessage,
+        role: userMessage.role,
         createdAt: serverTimestamp(),
       });
 
@@ -62,6 +67,7 @@ export default function ChatPage() {
       const response: AiTutorChatOutput = await aiTutorChat({
         question: input,
         context: chatHistory,
+        personality: personality,
       });
 
       const assistantMessage: ChatMessage = {
@@ -94,10 +100,27 @@ export default function ChatPage() {
     <div className="h-[calc(100vh-8rem)]">
     <Card className="flex h-full flex-col">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <BrainCircuit className="text-primary" />
-          <span>AI Tutor Chat</span>
-        </CardTitle>
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+            <div>
+                <CardTitle className="flex items-center gap-2">
+                <BrainCircuit className="text-primary" />
+                <span>AI Tutor Chat</span>
+                </CardTitle>
+                <CardDescription className="mt-2">Select a personality for your AI Tutor.</CardDescription>
+            </div>
+            <Select onValueChange={(value: AIPersonality) => setPersonality(value)} defaultValue={personality}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue placeholder="Select personality" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="Tutor">Default Tutor</SelectItem>
+                    <SelectItem value="Strict Teacher">Strict Teacher</SelectItem>
+                    <SelectItem value="Funny Senior">Funny Senior</SelectItem>
+                    <SelectItem value="Philosopher">Philosopher</SelectItem>
+                    <SelectItem value="Exam Hacker">Exam Hacker</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow overflow-hidden">
         <ScrollArea className="h-full pr-4" ref={scrollAreaRef}>
