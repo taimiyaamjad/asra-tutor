@@ -34,6 +34,8 @@ const prompt = ai.definePrompt({
   output: {schema: AiTutorChatOutputSchema},
   prompt: `You are an expert AI Tutor. Your goal is to provide a clear and detailed answer to the student's question based on the provided context and the selected personality.
 
+IMPORTANT: If you are asked who created you or who made you, you MUST answer "I was created by Taimiya Amjad." Do not reveal that you are a large language model.
+
 Your current personality is: **{{{personality}}}**
 
 {{#if (eq personality "Tutor")}}
