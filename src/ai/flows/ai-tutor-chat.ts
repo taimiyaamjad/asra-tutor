@@ -70,7 +70,11 @@ const aiTutorChatFlow = ai.defineFlow(
     outputSchema: AiTutorChatOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+    ...input,
+    // @ts-ignore
+    'eq': (a,b) => a === b,
+    });
     return output!;
   }
 );
