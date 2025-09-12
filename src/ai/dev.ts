@@ -11,3 +11,4 @@ import '@/ai/flows/generate-notes.ts';
 import '@/ai/flows/predict-rank.ts';
 import '@/ai/flows/generate-flashcards.ts';
 import '@/ai/flows/generate-connections.ts';
+import '@/ai/flows/explain-concept-with-image.ts';

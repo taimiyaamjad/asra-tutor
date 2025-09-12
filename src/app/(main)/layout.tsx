@@ -27,6 +27,7 @@ import {
   Layers,
   GitBranch,
   BookText,
+  Camera,
 } from 'lucide-react';
 
 import {
@@ -107,6 +108,11 @@ const menuItems = [
     href: '/flashcards',
     icon: Layers,
     label: 'Flashcards',
+  },
+   {
+    href: '/simulation',
+    icon: Camera,
+    label: 'Simulation',
   },
   {
     href: '/brainstorm',
