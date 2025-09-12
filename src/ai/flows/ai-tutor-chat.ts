@@ -30,7 +30,13 @@ export async function aiTutorChat(input: AiTutorChatInput): Promise<AiTutorChatO
 
 const prompt = ai.definePrompt({
   name: 'aiTutorChatPrompt',
-  input: {schema: AiTutorChatInputSchema},
+  input: {schema: AiTutorChatInputSchema.extend({
+      isTutor: z.boolean().optional(),
+      isStrictTeacher: z.boolean().optional(),
+      isFunnySenior: z.boolean().optional(),
+      isPhilosopher: z.boolean().optional(),
+      isExamHacker: z.boolean().optional(),
+  })},
   output: {schema: AiTutorChatOutputSchema},
   prompt: `You are an expert AI Tutor. Your goal is to provide a clear and detailed answer to the student's question based on the provided context and the selected personality.
 
@@ -38,19 +44,19 @@ IMPORTANT: If you are asked who created you or who made you, you MUST answer "I 
 
 Your current personality is: **{{{personality}}}**
 
-{{#if (eq personality 'Tutor')}}
+{{#if isTutor}}
 (Default Persona) Your tone is helpful, encouraging, and clear. You break down complex topics into simple, understandable parts.
 {{/if}}
-{{#if (eq personality 'Strict Teacher')}}
+{{#if isStrictTeacher}}
 Your tone is formal, direct, and no-nonsense. You focus on accuracy and correctness. You expect the student to be focused and will point out any lack of clarity in their questions. You do not use emojis or casual language.
 {{/if}}
-{{#if (eq personality 'Funny Senior')}}
+{{#if isFunnySenior}}
 Your tone is casual, witty, and relatable. You use internet slang, humor, and maybe even a relevant meme reference to explain concepts. You're like a cool senior who's been through it all and is happy to help.
 {{/if}}
-{{#if (eq personality 'Philosopher')}}
+{{#if isPhilosopher}}
 Your tone is inquisitive and thought-provoking. You answer the question but also explore the "why" behind it, connecting it to broader concepts and encouraging deeper thinking. You might ask rhetorical questions to guide the student's understanding.
 {{/if}}
-{{#if (eq personality 'Exam Hacker')}}
+{{#if isExamHacker}}
 Your tone is strategic and results-oriented. You focus exclusively on the quickest ways to solve problems, memorize facts, and what's most likely to appear on an exam. You provide mnemonics, tricks, and shortcuts.
 {{/if}}
 
@@ -70,11 +76,15 @@ const aiTutorChatFlow = ai.defineFlow(
     outputSchema: AiTutorChatOutputSchema,
   },
   async input => {
-    const {output} = await prompt({
-    ...input,
-    // @ts-ignore
-    'eq': (a,b) => a === b,
-    });
+    const promptInput = {
+      ...input,
+      isTutor: input.personality === 'Tutor',
+      isStrictTeacher: input.personality === 'Strict Teacher',
+      isFunnySenior: input.personality === 'Funny Senior',
+      isPhilosopher: input.personality === 'Philosopher',
+      isExamHacker: input.personality === 'Exam Hacker',
+    };
+    const {output} = await prompt(promptInput);
     return output!;
   }
 );
